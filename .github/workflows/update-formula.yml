@@ -1,0 +1,58 @@
+name: Update Formula
+
+# Triggered by a repository_dispatch event sent from the main LabelTruth repo's
+# release-cli workflow.  Updates the version, URLs, and SHA256 checksums in
+# Formula/labeltruth.rb to match the new release, then commits and pushes.
+
+on:
+  repository_dispatch:
+    types: [update-formula]
+
+permissions:
+  contents: write
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tap repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Extract release info
+        id: release
+        run: |
+          echo "VERSION=${{ github.event.client_payload.version }}" >> "$GITHUB_OUTPUT"
+          echo "TAG=${{ github.event.client_payload.tag }}" >> "$GITHUB_OUTPUT"
+
+      - name: Update Homebrew formula
+        run: |
+          VERSION="${{ steps.release.outputs.VERSION }}"
+          TAG="${{ steps.release.outputs.TAG }}"
+          DARWIN_ARM64_SHA="${{ github.event.client_payload.darwin_arm64_sha256 }}"
+          DARWIN_X64_SHA="${{ github.event.client_payload.darwin_x64_sha256 }}"
+          LINUX_X64_SHA="${{ github.event.client_payload.linux_x64_sha256 }}"
+
+          FORMULA="Formula/labeltruth.rb"
+
+          # Update version
+          sed -i "s/version \".*\"/version \"${VERSION}\"/" "$FORMULA"
+
+          # Update macOS arm64
+          sed -i "s|url \".*darwin-arm64\.tar\.gz\"|url \"https://github.com/rrainn/LabelTruth/releases/download/${TAG}/labeltruth-cli-${VERSION}-darwin-arm64.tar.gz\"|" "$FORMULA"
+          sed -i "s/sha256 \"PLACEHOLDER_DARWIN_ARM64\"/sha256 \"${DARWIN_ARM64_SHA}\"/" "$FORMULA"
+
+          # Update macOS x64
+          sed -i "s|url \".*darwin-x64\.tar\.gz\"|url \"https://github.com/rrainn/LabelTruth/releases/download/${TAG}/labeltruth-cli-${VERSION}-darwin-x64.tar.gz\"|" "$FORMULA"
+          sed -i "s/sha256 \"PLACEHOLDER_DARWIN_X64\"/sha256 \"${DARWIN_X64_SHA}\"/" "$FORMULA"
+
+          # Update Linux x64
+          sed -i "s|url \".*linux-x64\.tar\.gz\"|url \"https://github.com/rrainn/LabelTruth/releases/download/${TAG}/labeltruth-cli-${VERSION}-linux-x64.tar.gz\"|" "$FORMULA"
+          sed -i "s/sha256 \"PLACEHOLDER_LINUX_X64\"/sha256 \"${LINUX_X64_SHA}\"/" "$FORMULA"
+
+      - name: Commit and push formula update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/labeltruth.rb
+          git commit -m "Update labeltruth to ${{ steps.release.outputs.VERSION }}"
+          git push
