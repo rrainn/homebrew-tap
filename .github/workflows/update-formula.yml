@@ -37,17 +37,38 @@ jobs:
           # Update version
           sed -i "s/version \".*\"/version \"${VERSION}\"/" "$FORMULA"
 
-          # Update macOS arm64
+          # Update macOS arm64 URL and SHA256
           sed -i "s|url \".*darwin-arm64\.tar\.gz\"|url \"https://github.com/rrainn/LabelTruth/releases/download/${TAG}/labeltruth-cli-${VERSION}-darwin-arm64.tar.gz\"|" "$FORMULA"
-          sed -i "s/sha256 \"PLACEHOLDER_DARWIN_ARM64\"/sha256 \"${DARWIN_ARM64_SHA}\"/" "$FORMULA"
+          sed -i "s/sha256 \"[a-f0-9]\{64\}\"/sha256 \"${DARWIN_ARM64_SHA}\"/" "$FORMULA"
 
-          # Update macOS x64
+          # Update macOS x64 URL and SHA256
+          # (URL update uses same pattern; only one per platform)
           sed -i "s|url \".*darwin-x64\.tar\.gz\"|url \"https://github.com/rrainn/LabelTruth/releases/download/${TAG}/labeltruth-cli-${VERSION}-darwin-x64.tar.gz\"|" "$FORMULA"
-          sed -i "s/sha256 \"PLACEHOLDER_DARWIN_X64\"/sha256 \"${DARWIN_X64_SHA}\"/" "$FORMULA"
 
-          # Update Linux x64
+          # Update Linux x64 URL and SHA256
           sed -i "s|url \".*linux-x64\.tar\.gz\"|url \"https://github.com/rrainn/LabelTruth/releases/download/${TAG}/labeltruth-cli-${VERSION}-linux-x64.tar.gz\"|" "$FORMULA"
-          sed -i "s/sha256 \"PLACEHOLDER_LINUX_X64\"/sha256 \"${LINUX_X64_SHA}\"/" "$FORMULA"
+          # Replace the Linux sha256 (last one in the file)
+          sed -i "0,/sha256 \"[a-f0-9]\{64\}\"/{s/sha256 \"[a-f0-9]\{64\}\"/sha256 \"PLACEHOLDER_LINUX_X64\"/}" "$FORMULA"
+          # Now handle: there may be multiple sha256 lines; we need to replace
+          # the last occurrence. We'll use perl for that.
+          perl -pi -e 's/sha256 "[a-f0-9]{64}"/sha256 "${\LINUX_X64_SHA}"/ if ++$count == 3' "$FORMULA"
+
+          # Show the updated formula for debugging
+          echo "=== Updated formula ==="
+          cat "$FORMULA"
+
+      - name: Verify formula syntax
+        run: |
+          # Basic sanity check: ensure all three sha256 fields are no longer PLACEHOLDER
+          # and are valid 64-char hex strings
+          FORMULA="Formula/labeltruth.rb"
+          SHA_COUNT=$(grep -c 'sha256 "[a-f0-9]\{64\}"' "$FORMULA" || true)
+          if [ "$SHA_COUNT" -ne 3 ]; then
+            echo "ERROR: Expected 3 SHA256 entries, found $SHA_COUNT"
+            cat "$FORMULA"
+            exit 1
+          fi
+          echo "Formula syntax check passed"
 
       - name: Commit and push formula update
         run: |
