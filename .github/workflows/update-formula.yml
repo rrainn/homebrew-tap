@@ -26,54 +26,109 @@ jobs:
 
       - name: Update Homebrew formula
         run: |
-          VERSION="${{ steps.release.outputs.VERSION }}"
-          TAG="${{ steps.release.outputs.TAG }}"
-          DARWIN_ARM64_SHA="${{ github.event.client_payload.darwin_arm64_sha256 }}"
-          DARWIN_X64_SHA="${{ github.event.client_payload.darwin_x64_sha256 }}"
-          LINUX_X64_SHA="${{ github.event.client_payload.linux_x64_sha256 }}"
+          python3 - <<'PYEOF'
+          import re
 
-          FORMULA="Formula/labeltruth.rb"
+          version = "${{ steps.release.outputs.VERSION }}"
+          tag = "${{ steps.release.outputs.TAG }}"
+          darwin_arm64_sha = "${{ github.event.client_payload.darwin_arm64_sha256 }}"
+          darwin_x64_sha = "${{ github.event.client_payload.darwin_x64_sha256 }}"
+          linux_x64_sha = "${{ github.event.client_payload.linux_x64_sha256 }}"
+
+          formula_path = "Formula/labeltruth.rb"
+          with open(formula_path, "r") as f:
+              content = f.read()
+
+          base_url = f"https://github.com/rrainn/LabelTruth/releases/download/{tag}"
 
           # Update version
-          sed -i "s/version \".*\"/version \"${VERSION}\"/" "$FORMULA"
+          content = re.sub(r'version "[^"]*"', f'version "{version}"', content)
 
           # Update macOS arm64 URL and SHA256
-          sed -i "s|url \".*darwin-arm64\.tar\.gz\"|url \"https://github.com/rrainn/LabelTruth/releases/download/${TAG}/labeltruth-cli-${VERSION}-darwin-arm64.tar.gz\"|" "$FORMULA"
-          sed -i "s/sha256 \"[a-f0-9]\{64\}\"/sha256 \"${DARWIN_ARM64_SHA}\"/" "$FORMULA"
+          content = re.sub(
+              r'url ".*darwin-arm64\.tar\.gz"',
+              f'url "{base_url}/labeltruth-cli-{version}-darwin-arm64.tar.gz"',
+              content,
+          )
+          content = content.replace("PLACEHOLDER_DARWIN_ARM64", darwin_arm64_sha)
 
           # Update macOS x64 URL and SHA256
-          # (URL update uses same pattern; only one per platform)
-          sed -i "s|url \".*darwin-x64\.tar\.gz\"|url \"https://github.com/rrainn/LabelTruth/releases/download/${TAG}/labeltruth-cli-${VERSION}-darwin-x64.tar.gz\"|" "$FORMULA"
+          content = re.sub(
+              r'url ".*darwin-x64\.tar\.gz"',
+              f'url "{base_url}/labeltruth-cli-{version}-darwin-x64.tar.gz"',
+              content,
+          )
+          content = content.replace("PLACEHOLDER_DARWIN_X64", darwin_x64_sha)
 
           # Update Linux x64 URL and SHA256
-          sed -i "s|url \".*linux-x64\.tar\.gz\"|url \"https://github.com/rrainn/LabelTruth/releases/download/${TAG}/labeltruth-cli-${VERSION}-linux-x64.tar.gz\"|" "$FORMULA"
-          # Replace the Linux sha256 (last one in the file)
-          sed -i "0,/sha256 \"[a-f0-9]\{64\}\"/{s/sha256 \"[a-f0-9]\{64\}\"/sha256 \"PLACEHOLDER_LINUX_X64\"/}" "$FORMULA"
-          # Now handle: there may be multiple sha256 lines; we need to replace
-          # the last occurrence. We'll use perl for that.
-          perl -pi -e 's/sha256 "[a-f0-9]{64}"/sha256 "${\LINUX_X64_SHA}"/ if ++$count == 3' "$FORMULA"
+          content = re.sub(
+              r'url ".*linux-x64\.tar\.gz"',
+              f'url "{base_url}/labeltruth-cli-{version}-linux-x64.tar.gz"',
+              content,
+          )
+          content = content.replace("PLACEHOLDER_LINUX_X64", linux_x64_sha)
 
-          # Show the updated formula for debugging
-          echo "=== Updated formula ==="
-          cat "$FORMULA"
+          # For subsequent updates (when PLACEHOLDERs are already replaced),
+          # the .replace() calls above are no-ops. We need a second pass that
+          # replaces actual 64-char hex SHA256 strings per platform section.
+          # Split into sections and replace the sha256 in each section.
+          # This is handled by the PLACEHOLDER replacement on first release, and
+          # the section-based replacement below for subsequent releases.
 
-      - name: Verify formula syntax
-        run: |
-          # Basic sanity check: ensure all three sha256 fields are no longer PLACEHOLDER
-          # and are valid 64-char hex strings
-          FORMULA="Formula/labeltruth.rb"
-          SHA_COUNT=$(grep -c 'sha256 "[a-f0-9]\{64\}"' "$FORMULA" || true)
-          if [ "$SHA_COUNT" -ne 3 ]; then
-            echo "ERROR: Expected 3 SHA256 entries, found $SHA_COUNT"
-            cat "$FORMULA"
-            exit 1
-          fi
-          echo "Formula syntax check passed"
+          # More robust approach: replace all remaining old sha256 values per section
+          lines = content.split("\n")
+          in_macos_arm64 = False
+          in_macos_x64 = False
+          in_linux = False
+          for i, line in enumerate(lines):
+              stripped = line.strip()
+              # Track which section we're in
+              if "Hardware::CPU.arm?" in stripped:
+                  in_macos_arm64 = True
+                  in_macos_x64 = False
+                  in_linux = False
+              elif "else" in stripped and (in_macos_arm64 or in_macos_x64):
+                  in_macos_arm64 = False
+                  in_macos_x64 = True
+              elif stripped.startswith("on_linux do"):
+                  in_macos_arm64 = False
+                  in_macos_x64 = False
+                  in_linux = True
+              elif "end" in stripped and (in_macos_arm64 or in_macos_x64):
+                  # End of on_macos block
+                  in_macos_arm64 = False
+                  in_macos_x64 = False
+              elif "end" in stripped and in_linux:
+                  in_linux = False
+
+              # Replace sha256 in the correct section
+              if in_macos_arm64 and stripped.startswith("sha256"):
+                  lines[i] = re.sub(r'sha256 "[a-f0-9]{64}"', f'sha256 "{darwin_arm64_sha}"', line)
+              elif in_macos_x64 and stripped.startswith("sha256"):
+                  lines[i] = re.sub(r'sha256 "[a-f0-9]{64}"', f'sha256 "{darwin_x64_sha}"', line)
+              elif in_linux and stripped.startswith("sha256"):
+                  lines[i] = re.sub(r'sha256 "[a-f0-9]{64}"', f'sha256 "{linux_x64_sha}"', line)
+
+          content = "\n".join(lines)
+
+          with open(formula_path, "w") as f:
+              f.write(content)
+
+          print("=== Updated formula ===")
+          print(content)
+
+          # Verify: count sha256 entries with real hex values
+          sha_count = len(re.findall(r'sha256 "[a-f0-9]{64}"', content))
+          if sha_count != 3:
+              print(f"ERROR: Expected 3 SHA256 entries, found {sha_count}")
+              exit(1)
+          print(f"Formula syntax check passed ({sha_count} SHA256 entries)")
+          PYEOF
 
       - name: Commit and push formula update
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Formula/labeltruth.rb
-          git commit -m "Update labeltruth to ${{ steps.release.outputs.VERSION }}"
+          git diff --cached --quiet || git commit -m "Update labeltruth to ${{ steps.release.outputs.VERSION }}"
           git push
