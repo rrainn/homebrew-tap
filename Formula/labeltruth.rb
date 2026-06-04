@@ -7,7 +7,7 @@ class Labeltruth < Formula
   homepage "https://github.com/rrainn/LabelTruth"
   version "0.1.0"
 
-  depends_on "node@22"
+  depends_on "node"
 
   on_macos do
     if Hardware::CPU.arm?
