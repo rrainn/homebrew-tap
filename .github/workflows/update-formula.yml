@@ -44,33 +44,27 @@ jobs:
           # Update version
           content = re.sub(r'version "[^"]*"', f'version "{version}"', content)
 
-          # Update macOS arm64 URL and SHA256
+          # Update URLs by replacing just the URL string value.
+          # This approach is safe regardless of surrounding Ruby syntax
+          # (e.g. the `using: GitHubPrivateAssetDownloadStrategy` continuation
+          # on the next line is left untouched).
           content = re.sub(
-              r'url ".*darwin-arm64\.tar\.gz"',
-              f'url "{base_url}/labeltruth-cli-{version}-darwin-arm64.tar.gz"',
+              r'https://github\.com/rrainn/LabelTruth/releases/download/[^/]+/labeltruth-cli-[^"]*-darwin-arm64\.tar\.gz',
+              f'{base_url}/labeltruth-cli-{version}-darwin-arm64.tar.gz',
               content,
           )
-          content = content.replace("PLACEHOLDER_DARWIN_ARM64", darwin_arm64_sha)
-
-          # Update macOS x64 URL and SHA256
           content = re.sub(
-              r'url ".*darwin-x64\.tar\.gz"',
-              f'url "{base_url}/labeltruth-cli-{version}-darwin-x64.tar.gz"',
+              r'https://github\.com/rrainn/LabelTruth/releases/download/[^/]+/labeltruth-cli-[^"]*-darwin-x64\.tar\.gz',
+              f'{base_url}/labeltruth-cli-{version}-darwin-x64.tar.gz',
               content,
           )
-          content = content.replace("PLACEHOLDER_DARWIN_X64", darwin_x64_sha)
-
-          # Update Linux x64 URL and SHA256
           content = re.sub(
-              r'url ".*linux-x64\.tar\.gz"',
-              f'url "{base_url}/labeltruth-cli-{version}-linux-x64.tar.gz"',
+              r'https://github\.com/rrainn/LabelTruth/releases/download/[^/]+/labeltruth-cli-[^"]*-linux-x64\.tar\.gz',
+              f'{base_url}/labeltruth-cli-{version}-linux-x64.tar.gz',
               content,
           )
-          content = content.replace("PLACEHOLDER_LINUX_X64", linux_x64_sha)
 
-          # For subsequent updates (when PLACEHOLDERs are already replaced),
-          # the .replace() calls above are no-ops. We need a second pass that
-          # replaces actual 64-char hex SHA256 strings per platform section.
+          # Update SHA256 checksums per platform section.
           lines = content.split("\n")
           in_macos_arm64 = False
           in_macos_x64 = False
@@ -82,18 +76,18 @@ jobs:
                   in_macos_arm64 = True
                   in_macos_x64 = False
                   in_linux = False
-              elif "else" in stripped and (in_macos_arm64 or in_macos_x64):
+              elif stripped == "else" and (in_macos_arm64 or in_macos_x64):
                   in_macos_arm64 = False
                   in_macos_x64 = True
               elif stripped.startswith("on_linux do"):
                   in_macos_arm64 = False
                   in_macos_x64 = False
                   in_linux = True
-              elif "end" in stripped and (in_macos_arm64 or in_macos_x64):
+              elif stripped == "end" and (in_macos_arm64 or in_macos_x64):
                   # End of on_macos block
                   in_macos_arm64 = False
                   in_macos_x64 = False
-              elif "end" in stripped and in_linux:
+              elif stripped == "end" and in_linux:
                   in_linux = False
 
               # Replace sha256 in the correct section
@@ -119,11 +113,11 @@ jobs:
               exit(1)
           print(f"Formula syntax check passed ({sha_count} SHA256 entries)")
 
-          # Verify: fetch override is present (for private repo auth)
-          if "def fetch" not in content:
-              print("ERROR: fetch override for private repo auth is missing")
+          # Verify: private-repo download strategy class is present
+          if "GitHubPrivateAssetDownloadStrategy" not in content:
+              print("ERROR: GitHubPrivateAssetDownloadStrategy class is missing")
               exit(1)
-          print("Private repo auth check passed (fetch override present)")
+          print("Private repo auth check passed (GitHubPrivateAssetDownloadStrategy present)")
           PYEOF
 
       - name: Commit and push formula update
