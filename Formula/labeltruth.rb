@@ -58,7 +58,7 @@ class Labeltruth < Formula
   version "0.0.7"
 
   depends_on "node"
-  depends_on "python@3.13"
+  depends_on "python@3.11"
 
   on_macos do
     if Hardware::CPU.arm?
@@ -80,21 +80,25 @@ class Labeltruth < Formula
 
   def worker_python_packages
     packages = %w[
-      torch
-      onnx
-      onnxscript
+      torch==2.12.0
+      onnx==1.17.0
+      onnxscript==0.2.6
       Pillow
       requests
-      tensorboard
-      tensorflow
-      tf_keras
-      onnx2tf
-      onnx2keras
-      tensorflowjs
+      tensorboard==2.15.2
+      tensorflow==2.15.0
+      tf_keras==2.15.0
+      onnx-graphsurgeon==0.6.1
+      psutil
+      ai-edge-litert==2.1.5
+      sng4onnx==2.0.1
+      onnx2tf==1.28.8
+      onnx2keras==0.0.24
+      tensorflowjs==4.22.0
     ]
 
     # Core ML conversion is only available on macOS, so Linux workers skip it.
-    packages << "coremltools" if OS.mac?
+    packages << "coremltools==9.0" if OS.mac?
     packages
   end
 
@@ -102,8 +106,8 @@ class Labeltruth < Formula
     libexec/"worker-python/bin/python3"
   end
 
-  def python313
-    Formula["python@3.13"].opt_bin/"python3.13"
+  def python311
+    Formula["python@3.11"].opt_bin/"python3.11"
   end
 
   def install
@@ -111,9 +115,9 @@ class Labeltruth < Formula
     # build directory already contains dist/, node_modules/, package.json directly.
     libexec.install Dir["*"]
 
-    # Keep all ML packages in one Python 3.13 environment so TensorFlow and
-    # PyTorch import from the same interpreter without user shell config.
-    system python313, "-m", "venv", libexec/"worker-python"
+    # Keep all ML packages in one Python 3.11 environment so TensorFlow.js,
+    # TensorFlow, and PyTorch import from one interpreter without user config.
+    system python311, "-m", "venv", libexec/"worker-python"
     system worker_python, "-m", "pip", "install", "--upgrade", "pip"
     system worker_python, "-m", "pip", "install", *worker_python_packages
 
@@ -142,6 +146,10 @@ class Labeltruth < Formula
       tensorboard
       tensorflow
       tf_keras
+      onnx_graphsurgeon
+      psutil
+      ai_edge_litert
+      sng4onnx
       onnx2tf
       onnx2keras
       tensorflowjs
