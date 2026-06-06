@@ -79,6 +79,9 @@ class Labeltruth < Formula
 
   def install
     libexec.install Dir["*"]
+    # TypeScript's compiler does not set the executable bit on output files.
+    # Without +x, Homebrew will not link the file into PATH via install_symlink.
+    chmod 0755, libexec/"dist/bin/cli.js"
     # The shebang in dist/bin/cli.js is #!/usr/bin/env node, so the symlink
     # resolves correctly when Node.js is installed via Homebrew.
     bin.install_symlink libexec/"dist/bin/cli.js" => "labeltruth"
