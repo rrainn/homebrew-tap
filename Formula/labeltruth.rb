@@ -4,6 +4,7 @@
 # manually — the update-formula workflow will overwrite them.
 
 require "json"
+require "language/python/virtualenv"
 require "net/http"
 
 # Custom download strategy that authenticates with GitHub API to download
@@ -53,11 +54,18 @@ class GitHubPrivateAssetDownloadStrategy < CurlDownloadStrategy
 end
 
 class Labeltruth < Formula
+  include Language::Python::Virtualenv
+
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
   version "0.0.5"
 
   depends_on "node"
+  depends_on "onnx"
+  depends_on "pillow"
+  depends_on "python@3.13"
+  depends_on "pytorch"
+  depends_on "torchvision"
 
   on_macos do
     if Hardware::CPU.arm?
@@ -77,19 +85,72 @@ class Labeltruth < Formula
     sha256 "535d90de6b2a71de0b96f7d1f3a68c0a0c89287dd7932a08e2fe0bb36556b57e"
   end
 
+  def worker_python_packages
+    packages = %w[
+      onnxscript
+      requests
+      tensorboard
+      tensorflow
+      onnx2tf
+      onnx2keras
+      tensorflowjs
+    ]
+
+    # Core ML conversion is only available on macOS, so Linux workers skip it.
+    packages << "coremltools" if OS.mac?
+    packages
+  end
+
+  def worker_python
+    libexec/"worker-python/bin/python3"
+  end
+
   def install
     # Homebrew strips the top-level directory when extracting tarballs, so the
     # build directory already contains dist/, node_modules/, package.json directly.
     libexec.install Dir["*"]
+
+    # Create a private worker environment while still exposing Homebrew-provided
+    # PyTorch, torchvision, ONNX, and Pillow packages from python@3.13.
+    venv = virtualenv_create(libexec/"worker-python", "python3.13", system_site_packages: true, without_pip: false)
+    venv.pip_install worker_python_packages
+
     # TypeScript's compiler does not set the executable bit on output files.
-    # Without +x, Homebrew will not link the file into PATH via install_symlink.
     chmod 0755, libexec/"dist/bin/cli.js"
-    # The shebang in dist/bin/cli.js is #!/usr/bin/env node, so the symlink
-    # resolves correctly when Node.js is installed via Homebrew.
-    bin.install_symlink libexec/"dist/bin/cli.js" => "labeltruth"
+
+    # Set LABELTRUTH_PYTHON by default so worker users do not need shell config.
+    # A user-supplied LABELTRUTH_PYTHON still wins for custom Python setups.
+    (bin/"labeltruth").write <<~EOS
+      #!/bin/bash
+      export LABELTRUTH_PYTHON="${LABELTRUTH_PYTHON:-#{worker_python}}"
+      exec "#{Formula["node"].opt_bin}/node" "#{libexec}/dist/bin/cli.js" "$@"
+    EOS
+    chmod 0755, bin/"labeltruth"
   end
 
   test do
     assert_match "labeltruth", shell_output("#{bin}/labeltruth --help")
+
+    imports = %w[
+      torch
+      torchvision
+      onnx
+      onnxscript
+      PIL
+      requests
+      tensorboard
+      tensorflow
+      onnx2tf
+      onnx2keras
+      tensorflowjs
+    ]
+    imports << "coremltools" if OS.mac?
+
+    python_probe = <<~PYTHON
+      import importlib
+      for module_name in #{imports.inspect}:
+          importlib.import_module(module_name)
+    PYTHON
+    system worker_python, "-c", python_probe
   end
 end
