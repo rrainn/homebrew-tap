@@ -111,10 +111,6 @@ class Labeltruth < Formula
     # build directory already contains dist/, node_modules/, package.json directly.
     libexec.install Dir["*"]
 
-    # Patch the 0.0.6 compiled probe so a broken torchvision wheel does not
-    # prevent core PyTorch training and conversion workers from registering.
-    inreplace libexec/"dist/shared/constants/pythonCapability.js", "    \"torchvision\",\n", ""
-
     # Keep all ML packages in one Python 3.13 environment so TensorFlow and
     # PyTorch import from the same interpreter without user shell config.
     system python313, "-m", "venv", libexec/"worker-python"
