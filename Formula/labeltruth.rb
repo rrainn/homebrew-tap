@@ -6,20 +6,20 @@
 # Custom download strategy for private GitHub repositories.
 # Homebrew's default curl download does not pass HOMEBREW_GITHUB_API_TOKEN
 # when fetching release assets, so private repos return 404. This strategy
-# adds an Authorization header using the token when available.
+# injects an Authorization header into curl_args before each fetch.
 class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
-  def initialize(url, name, version, **meta)
-    super
-    @token = ENV["HOMEBREW_GITHUB_API_TOKEN"]
-  end
-
   private
 
   def _fetch(url:, resolved_url:, timeout:)
-    args = [*curl_args(resolved_url, timeout: timeout)]
-    args += ["--header", "Authorization: token #{@token}"] if @token
-    args += ["--location", resolved_url]
-    curl_download(*args, to: temporary_path)
+    token = ENV["HOMEBREW_GITHUB_API_TOKEN"]
+    if token
+      saved = @curl_args.dup
+      @curl_args += ["--header", "Authorization: token #{token}"]
+      super
+      @curl_args = saved
+    else
+      super
+    end
   end
 end
 
