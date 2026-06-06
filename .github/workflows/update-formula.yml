@@ -45,25 +45,28 @@ jobs:
           content = re.sub(r'version "[^"]*"', f'version "{version}"', content)
 
           # Update macOS arm64 URL and SHA256
+          # The regex captures the full url line including optional trailing
+          # comma and the "using:" download strategy on the next line, so
+          # the custom GitHubPrivateRepositoryDownloadStrategy is preserved.
           content = re.sub(
-              r'url ".*darwin-arm64\.tar\.gz"',
-              f'url "{base_url}/labeltruth-cli-{version}-darwin-arm64.tar.gz"',
+              r'url ".*darwin-arm64\.tar\.gz"(?:,\s*\n\s*using: \w+)?',
+              f'url "{base_url}/labeltruth-cli-{version}-darwin-arm64.tar.gz",\n          using: GitHubPrivateRepositoryDownloadStrategy',
               content,
           )
           content = content.replace("PLACEHOLDER_DARWIN_ARM64", darwin_arm64_sha)
 
           # Update macOS x64 URL and SHA256
           content = re.sub(
-              r'url ".*darwin-x64\.tar\.gz"',
-              f'url "{base_url}/labeltruth-cli-{version}-darwin-x64.tar.gz"',
+              r'url ".*darwin-x64\.tar\.gz"(?:,\s*\n\s*using: \w+)?',
+              f'url "{base_url}/labeltruth-cli-{version}-darwin-x64.tar.gz",\n          using: GitHubPrivateRepositoryDownloadStrategy',
               content,
           )
           content = content.replace("PLACEHOLDER_DARWIN_X64", darwin_x64_sha)
 
           # Update Linux x64 URL and SHA256
           content = re.sub(
-              r'url ".*linux-x64\.tar\.gz"',
-              f'url "{base_url}/labeltruth-cli-{version}-linux-x64.tar.gz"',
+              r'url ".*linux-x64\.tar\.gz"(?:,\s*\n\s*using: \w+)?',
+              f'url "{base_url}/labeltruth-cli-{version}-linux-x64.tar.gz",\n        using: GitHubPrivateRepositoryDownloadStrategy',
               content,
           )
           content = content.replace("PLACEHOLDER_LINUX_X64", linux_x64_sha)
