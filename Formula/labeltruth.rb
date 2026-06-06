@@ -3,28 +3,49 @@
 # when a new v* tag is pushed.  Do NOT edit the version/sha256/url fields
 # manually — the update-formula workflow will overwrite them.
 
+require "json"
+require "open-uri"
+
 # Custom download strategy for private GitHub release assets.
 # GitHub's browser download URLs do not accept token authentication.
-# This strategy converts the URL to the GitHub API endpoint (which does
-# accept tokens) and adds the required Accept header for binary downloads.
+# This strategy:
+#   1. Parses the URL to extract owner/repo/tag/filename
+#   2. Calls the GitHub API to get the release and find the numeric asset ID
+#   3. Downloads using the API URL with token auth and Accept header
 class GitHubPrivateReleaseDownloadStrategy < CurlDownloadStrategy
   private
 
   def _fetch(url:, resolved_url:, **kwargs)
     token = ENV["HOMEBREW_GITHUB_API_TOKEN"]
     if token && resolved_url.include?("github.com")
-      api_url = resolved_url.sub(
-        %r{github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/(.+)},
-        'api.github.com/repos/\1/\2/releases/assets/\4'
+      # Parse: github.com/{owner}/{repo}/releases/download/{tag}/{filename}
+      match = resolved_url.match(
+        %r{github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/(.+)}
       )
-      @curl_args += [
-        "--header", "Authorization: token #{token}",
-        "--header", "Accept: application/octet-stream",
-      ]
-    else
-      api_url = resolved_url
+      if match
+        owner, repo, tag, filename = match.captures
+
+        # Fetch release metadata to get the numeric asset ID
+        release_url = "https://api.github.com/repos/#{owner}/#{repo}/releases/tags/#{tag}"
+        release_json = URI.open(release_url, "Authorization" => "token #{token}").read
+        release = JSON.parse(release_json)
+
+        asset = release["assets"]&.find { |a| a["name"] == filename }
+        if asset
+          asset_id = asset["id"]
+          api_url = "https://api.github.com/repos/#{owner}/#{repo}/releases/assets/#{asset_id}"
+
+          @curl_args += [
+            "--header", "Authorization: token #{token}",
+            "--header", "Accept: application/octet-stream",
+          ]
+          return super(url: url, resolved_url: api_url, **kwargs)
+        else
+          opoo "Asset #{filename} not found in release #{tag}"
+        end
+      end
     end
-    super(url: url, resolved_url: api_url, **kwargs)
+    super(url: url, resolved_url: resolved_url, **kwargs)
   end
 end
 
