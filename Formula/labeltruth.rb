@@ -56,7 +56,6 @@ class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
   version "0.0.7"
-  revision 1
 
   depends_on "node"
   depends_on "python@3.13"
@@ -88,6 +87,7 @@ class Labeltruth < Formula
       requests
       tensorboard
       tensorflow
+      tf_keras
       onnx2tf
       onnx2keras
       tensorflowjs
@@ -141,6 +141,7 @@ class Labeltruth < Formula
       requests
       tensorboard
       tensorflow
+      tf_keras
       onnx2tf
       onnx2keras
       tensorflowjs
