@@ -78,10 +78,9 @@ class Labeltruth < Formula
   end
 
   def install
-    # The tarball is created with a labeltruth-cli/ top-level directory so that
-    # the archive has a consistent prefix. Install only the contents of that
-    # subdirectory into libexec to avoid an extra nesting level.
-    libexec.install Dir["labeltruth-cli/*"]
+    # Homebrew strips the top-level directory when extracting tarballs, so the
+    # build directory already contains dist/, node_modules/, package.json directly.
+    libexec.install Dir["*"]
     # TypeScript's compiler does not set the executable bit on output files.
     # Without +x, Homebrew will not link the file into PATH via install_symlink.
     chmod 0755, libexec/"dist/bin/cli.js"
