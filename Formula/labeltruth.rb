@@ -60,6 +60,10 @@ class Labeltruth < Formula
   depends_on "node"
   depends_on "python@3.11"
 
+  # ai-edge-litert ships Metal dylibs with @rpath install names that cannot be
+  # expanded to Homebrew's absolute opt paths after wheel installation.
+  preserve_rpath
+
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.7/labeltruth-cli-0.0.7-darwin-arm64.tar.gz",
