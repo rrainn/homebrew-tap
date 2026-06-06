@@ -114,10 +114,74 @@ class Labeltruth < Formula
     Formula["python@3.11"].opt_bin/"python3.11"
   end
 
+  def patch_compiled_worker_probe
+    worker_js = libexec/"dist/commands/worker.js"
+    worker_source = worker_js.read
+
+    # Version 0.0.7 opens the WebSocket before the slow TensorFlow/CoreML probe.
+    # Move the probe before socket creation so server auth timeouts do not fire.
+    if worker_source.include?("void probeCapability()\n                        .then")
+      worker_source = worker_source.sub(
+        "    process.on('SIGINT', handleSignal);\n" \
+        "    process.on('SIGTERM', handleSignal);\n" \
+        "    // -- Reconnect loop with exponential back-off --------------------------------\n" \
+        "    let backoffMs = 1000;\n",
+        "    process.on('SIGINT', handleSignal);\n" \
+        "    process.on('SIGTERM', handleSignal);\n" \
+        "    // Probe before opening the socket so slow ML imports cannot consume the server auth timeout.\n" \
+        "    const pytorchTrainingCapability = await probeCapability().catch(() => false);\n" \
+        "    // -- Reconnect loop with exponential back-off --------------------------------\n" \
+        "    let backoffMs = 1000;\n"
+      )
+
+      worker_source = worker_source.sub(
+        "                const sendRegistration = (pytorchTraining) => {\n" \
+        "                    currentWs.send(JSON.stringify({\n" \
+        "                        type: 'register',\n" \
+        "                        token,\n" \
+        "                        capabilities: { pytorchTraining }\n" \
+        "                    }));\n" \
+        "                };\n" \
+        "                currentWs.on('open', () => {\n" \
+        "                    backoffMs = 1000; // reset on successful connect\n" \
+        "                    void probeCapability()\n" \
+        "                        .then((pytorchTraining) => sendRegistration(pytorchTraining))\n" \
+        "                        .catch(() => sendRegistration(false));\n" \
+        "                });\n",
+        "                const sendRegistration = () => {\n" \
+        "                    currentWs.send(JSON.stringify({\n" \
+        "                        type: 'register',\n" \
+        "                        token,\n" \
+        "                        capabilities: { pytorchTraining: pytorchTrainingCapability }\n" \
+        "                    }));\n" \
+        "                };\n" \
+        "                currentWs.on('open', () => {\n" \
+        "                    backoffMs = 1000; // reset on successful connect\n" \
+        "                    sendRegistration();\n" \
+        "                });\n"
+      )
+
+      worker_js.write worker_source
+    end
+
+    probe_js = libexec/"dist/shared/constants/pythonCapability.js"
+    probe_source = probe_js.read
+
+    # Keep the compiled 0.0.7 probe aligned with the full worker environment.
+    if probe_source.include?("    \"tensorflow\",\n    \"onnx2tf\",")
+      probe_js.write probe_source.sub(
+        "    \"tensorflow\",\n    \"onnx2tf\",",
+        "    \"tensorflow\",\n    \"tf_keras\",\n    \"onnx_graphsurgeon\",\n    \"psutil\",\n    \"ai_edge_litert\",\n    \"sng4onnx\",\n    \"onnx2tf\","
+      )
+    end
+  end
+
   def install
     # Homebrew strips the top-level directory when extracting tarballs, so the
     # build directory already contains dist/, node_modules/, package.json directly.
     libexec.install Dir["*"]
+
+    patch_compiled_worker_probe
 
     # Keep all ML packages in one Python 3.11 environment so TensorFlow.js,
     # TensorFlow, and PyTorch import from one interpreter without user config.
