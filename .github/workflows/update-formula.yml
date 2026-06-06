@@ -45,27 +45,25 @@ jobs:
           content = re.sub(r'version "[^"]*"', f'version "{version}"', content)
 
           # Update macOS arm64 URL and SHA256
-          # The regex matches the url line and preserves the "using:" download
-          # strategy on the next line so private repo auth continues to work.
           content = re.sub(
-              r'(url ")(.*?)(darwin-arm64\.tar\.gz")((?:\s*,\s*\n\s*using: \w+)?)',
-              lambda m: f'{m.group(1)}{base_url}/labeltruth-cli-{version}-{m.group(3)},\n          using: GitHubPrivateReleaseDownloadStrategy',
+              r'url ".*darwin-arm64\.tar\.gz"',
+              f'url "{base_url}/labeltruth-cli-{version}-darwin-arm64.tar.gz"',
               content,
           )
           content = content.replace("PLACEHOLDER_DARWIN_ARM64", darwin_arm64_sha)
 
           # Update macOS x64 URL and SHA256
           content = re.sub(
-              r'(url ")(.*?)(darwin-x64\.tar\.gz")((?:\s*,\s*\n\s*using: \w+)?)',
-              lambda m: f'{m.group(1)}{base_url}/labeltruth-cli-{version}-{m.group(3)},\n          using: GitHubPrivateReleaseDownloadStrategy',
+              r'url ".*darwin-x64\.tar\.gz"',
+              f'url "{base_url}/labeltruth-cli-{version}-darwin-x64.tar.gz"',
               content,
           )
           content = content.replace("PLACEHOLDER_DARWIN_X64", darwin_x64_sha)
 
           # Update Linux x64 URL and SHA256
           content = re.sub(
-              r'(url ")(.*?)(linux-x64\.tar\.gz")((?:\s*,\s*\n\s*using: \w+)?)',
-              lambda m: f'{m.group(1)}{base_url}/labeltruth-cli-{version}-{m.group(3)},\n        using: GitHubPrivateReleaseDownloadStrategy',
+              r'url ".*linux-x64\.tar\.gz"',
+              f'url "{base_url}/labeltruth-cli-{version}-linux-x64.tar.gz"',
               content,
           )
           content = content.replace("PLACEHOLDER_LINUX_X64", linux_x64_sha)
@@ -121,12 +119,11 @@ jobs:
               exit(1)
           print(f"Formula syntax check passed ({sha_count} SHA256 entries)")
 
-          # Verify: count using: entries
-          using_count = len(re.findall(r'using: GitHubPrivateReleaseDownloadStrategy', content))
-          if using_count != 3:
-              print(f"ERROR: Expected 3 using: entries, found {using_count}")
+          # Verify: fetch override is present (for private repo auth)
+          if "def fetch" not in content:
+              print("ERROR: fetch override for private repo auth is missing")
               exit(1)
-          print(f"Download strategy check passed ({using_count} using: entries)")
+          print("Private repo auth check passed (fetch override present)")
           PYEOF
 
       - name: Commit and push formula update
