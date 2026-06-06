@@ -55,7 +55,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.6"
+  version "0.0.7"
   revision 1
 
   depends_on "node"
@@ -63,20 +63,20 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.6/labeltruth-cli-0.0.6-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.7/labeltruth-cli-0.0.7-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "5ea6711bd561ee422cca88da94243d4f235167bed6a7f6315a7580986c0c2594"
+      sha256 "e0b80a402ac6b27dec3570329d730c82121d7f621b5afcb26016352f526b50a8"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.6/labeltruth-cli-0.0.6-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.7/labeltruth-cli-0.0.7-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "9eb614c340d8f849faf25e70236b426ea6f46b6d530ca7a86ce7e7c54021f479"
+      sha256 "10ca5490f35f8c80854f2e2328efc47a54f53a930720f9601de7494631f30856"
     end
   end
 
   on_linux do
-    url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.6/labeltruth-cli-0.0.6-linux-x64.tar.gz",
+    url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.7/labeltruth-cli-0.0.7-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-    sha256 "a7cc44cb9c85a0b7819d949436061f6f12592d5b3a10079e5208b60d41261add"
+    sha256 "d15284afed735e2a34b1f39ef544665765ed2b30f1051aae217c11d7557f2261"
   end
 
   def worker_python_packages
