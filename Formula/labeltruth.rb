@@ -61,11 +61,7 @@ class Labeltruth < Formula
   version "0.0.5"
 
   depends_on "node"
-  depends_on "onnx"
-  depends_on "pillow"
   depends_on "python@3.13"
-  depends_on "pytorch"
-  depends_on "torchvision"
 
   on_macos do
     if Hardware::CPU.arm?
@@ -87,7 +83,11 @@ class Labeltruth < Formula
 
   def worker_python_packages
     packages = %w[
+      torch
+      torchvision
+      onnx
       onnxscript
+      Pillow
       requests
       tensorboard
       tensorflow
@@ -110,9 +110,9 @@ class Labeltruth < Formula
     # build directory already contains dist/, node_modules/, package.json directly.
     libexec.install Dir["*"]
 
-    # Create a private worker environment while still exposing Homebrew-provided
-    # PyTorch, torchvision, ONNX, and Pillow packages from python@3.13.
-    venv = virtualenv_create(libexec/"worker-python", "python3.13", system_site_packages: true, without_pip: false)
+    # Keep all ML packages in one Python 3.13 environment so TensorFlow and
+    # PyTorch import from the same interpreter without user shell config.
+    venv = virtualenv_create(libexec/"worker-python", "python3.13", without_pip: false)
     venv.pip_install worker_python_packages
 
     # TypeScript's compiler does not set the executable bit on output files.
