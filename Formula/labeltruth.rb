@@ -161,7 +161,7 @@ class Labeltruth < Formula
         "                });\n"
       )
 
-      worker_js.write worker_source
+      worker_js.open("w") { |file| file.write worker_source }
     end
 
     probe_js = libexec/"dist/shared/constants/pythonCapability.js"
@@ -169,10 +169,12 @@ class Labeltruth < Formula
 
     # Keep the compiled 0.0.7 probe aligned with the full worker environment.
     if probe_source.include?("    \"tensorflow\",\n    \"onnx2tf\",")
-      probe_js.write probe_source.sub(
-        "    \"tensorflow\",\n    \"onnx2tf\",",
-        "    \"tensorflow\",\n    \"tf_keras\",\n    \"onnx_graphsurgeon\",\n    \"psutil\",\n    \"ai_edge_litert\",\n    \"sng4onnx\",\n    \"onnx2tf\","
-      )
+      probe_js.open("w") do |file|
+        file.write probe_source.sub(
+          "    \"tensorflow\",\n    \"onnx2tf\",",
+          "    \"tensorflow\",\n    \"tf_keras\",\n    \"onnx_graphsurgeon\",\n    \"psutil\",\n    \"ai_edge_litert\",\n    \"sng4onnx\",\n    \"onnx2tf\","
+        )
+      end
     end
   end
 
