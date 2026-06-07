@@ -53,10 +53,12 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.12"
+  version "0.0.13"
 
   depends_on "node"
   depends_on "python@3.11"
+
+  conflicts_with "labeltruth@beta", because: "both formulas install the labeltruth CLI binary"
 
   # ai-edge-litert ships Metal dylibs with @rpath install names that cannot be
   # expanded to Homebrew's absolute opt paths after wheel installation.
@@ -64,20 +66,26 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.12/labeltruth-cli-0.0.12-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.13/labeltruth-cli-0.0.13-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "252ab5a4beaf0c4754d45bb30f73946ad91b2bfaf514d1e679aa76d7c12524f7"
+      sha256 "b958a73a65eb069c33f6f0c64d16587fb3f7dedadcf146312c63f406136f33a7"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.12/labeltruth-cli-0.0.12-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.13/labeltruth-cli-0.0.13-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "7a3c9c9a46675133a37c370988ff6b83137752f5d93904fa93489fe8593a3fa5"
+      sha256 "0e115efe4eeeee84ac15704b7d313cf6834d4dfc281e7e96afa21692b1c0598f"
     end
   end
 
   on_linux do
-    url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.12/labeltruth-cli-0.0.12-linux-x64.tar.gz",
+    if Hardware::CPU.arm?
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.13/labeltruth-cli-0.0.13-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-    sha256 "ef0711a0c2c54a0db6d6db5eb36b5f15b00e149011a5c3732d40c05b5f8fc8c3"
+      sha256 "7625d28c35023c3cd8080be2e37c183cb01335b94f589996d6ea7efac4332daa"
+    else
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.13/labeltruth-cli-0.0.13-linux-x64.tar.gz",
+        using: GitHubPrivateAssetDownloadStrategy
+      sha256 "37d0a96132a81aaba0d121d8568604eadbbf260511ad065f243f93eee5b7d04b"
+    end
   end
 
   def worker_python_packages
@@ -92,16 +100,21 @@ class Labeltruth < Formula
       onnx-graphsurgeon==0.6.1
       psutil==7.2.2
       sng4onnx==2.0.1
-      onnx2tf==1.28.8
       onnx2keras==0.0.24
-      tensorflowjs==4.22.0
     ]
 
     # Platform-specific package specs keep one manifest while matching wheel availability.
     packages << "torch==2.2.2" if OS.mac?
+    packages << "torchvision==0.17.2" if OS.mac?
+    packages << "torch==2.2.2" if OS.linux? && Hardware::CPU.arm?
+    packages << "torchvision==0.17.2" if OS.linux? && Hardware::CPU.arm?
     packages << "ai-edge-litert==2.1.5" if OS.mac? && Hardware::CPU.arm?
     packages << "ai-edge-litert==1.0.1" if OS.mac? && Hardware::CPU.intel?
-    packages << "ai-edge-litert==2.1.5" if OS.linux?
+    packages << "ai-edge-litert==2.1.5" if OS.linux? && Hardware::CPU.intel?
+    packages << "onnx2tf==1.28.8" if OS.mac?
+    packages << "onnx2tf==1.28.8" if OS.linux? && Hardware::CPU.intel?
+    packages << "tensorflowjs==4.22.0" if OS.mac?
+    packages << "tensorflowjs==4.22.0" if OS.linux? && Hardware::CPU.intel?
     packages << "coremltools==9.0" if OS.mac?
     packages
   end
@@ -110,13 +123,13 @@ class Labeltruth < Formula
     packages = []
 
     # Some packages need a dedicated pip source, such as Linux CPU-only PyTorch.
-    packages << { package: "torch==2.2.2+cpu", extra_index_url: "https://download.pytorch.org/whl/cpu" } if OS.linux?
+    packages << { package: "torch==2.2.2+cpu", extra_index_url: "https://download.pytorch.org/whl/cpu" } if OS.linux? && Hardware::CPU.intel?
+    packages << { package: "torchvision==0.17.2+cpu", extra_index_url: "https://download.pytorch.org/whl/cpu" } if OS.linux? && Hardware::CPU.intel?
     packages
   end
 
   def worker_python_imports
     imports = %w[
-      torch
       onnx
       onnxscript
       PIL
@@ -126,14 +139,24 @@ class Labeltruth < Formula
       tf_keras
       onnx_graphsurgeon
       psutil
-      ai_edge_litert
       sng4onnx
-      onnx2tf
       onnx2keras
-      tensorflowjs
     ]
 
-    # Core ML conversion is only available on macOS, so Linux workers skip it.
+    # Platform-specific imports mirror wheel availability in the package manifest.
+    imports << "torch" if OS.mac?
+    imports << "torchvision" if OS.mac?
+    imports << "torch" if OS.linux? && Hardware::CPU.intel?
+    imports << "torchvision" if OS.linux? && Hardware::CPU.intel?
+    imports << "torch" if OS.linux? && Hardware::CPU.arm?
+    imports << "torchvision" if OS.linux? && Hardware::CPU.arm?
+    imports << "ai_edge_litert" if OS.mac? && Hardware::CPU.arm?
+    imports << "ai_edge_litert" if OS.mac? && Hardware::CPU.intel?
+    imports << "ai_edge_litert" if OS.linux? && Hardware::CPU.intel?
+    imports << "onnx2tf" if OS.mac?
+    imports << "onnx2tf" if OS.linux? && Hardware::CPU.intel?
+    imports << "tensorflowjs" if OS.mac?
+    imports << "tensorflowjs" if OS.linux? && Hardware::CPU.intel?
     imports << "coremltools" if OS.mac?
     imports
   end
