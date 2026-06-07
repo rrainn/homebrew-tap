@@ -53,7 +53,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.8"
+  version "0.0.12"
 
   depends_on "node"
   depends_on "python@3.11"
@@ -64,25 +64,24 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.8/labeltruth-cli-0.0.8-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.12/labeltruth-cli-0.0.12-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "8e86b3f8e9a143dfaafc7f92c643b7c240af29536b147fcf49605230fabbf9c0"
+      sha256 "252ab5a4beaf0c4754d45bb30f73946ad91b2bfaf514d1e679aa76d7c12524f7"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.8/labeltruth-cli-0.0.8-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.12/labeltruth-cli-0.0.12-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "cc4a7348060cbff80130416b58c69b3cc2511b7757ac250f77afe521de534bca"
+      sha256 "7a3c9c9a46675133a37c370988ff6b83137752f5d93904fa93489fe8593a3fa5"
     end
   end
 
   on_linux do
-    url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.8/labeltruth-cli-0.0.8-linux-x64.tar.gz",
+    url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.12/labeltruth-cli-0.0.12-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-    sha256 "83b66cf0228ab26ad84afd6fd6c5b56f280b0b385ad91c6d996ede76318e10f1"
+    sha256 "ef0711a0c2c54a0db6d6db5eb36b5f15b00e149011a5c3732d40c05b5f8fc8c3"
   end
 
   def worker_python_packages
     packages = %w[
-      torch==2.12.0
       onnx==1.17.0
       onnxscript==0.2.6
       Pillow==12.2.0
@@ -92,15 +91,26 @@ class Labeltruth < Formula
       tf_keras==2.15.0
       onnx-graphsurgeon==0.6.1
       psutil==7.2.2
-      ai-edge-litert==2.1.5
       sng4onnx==2.0.1
       onnx2tf==1.28.8
       onnx2keras==0.0.24
       tensorflowjs==4.22.0
     ]
 
-    # Core ML conversion is only available on macOS, so Linux workers skip it.
+    # Platform-specific package specs keep one manifest while matching wheel availability.
+    packages << "torch==2.2.2" if OS.mac?
+    packages << "ai-edge-litert==2.1.5" if OS.mac? && Hardware::CPU.arm?
+    packages << "ai-edge-litert==1.0.1" if OS.mac? && Hardware::CPU.intel?
+    packages << "ai-edge-litert==2.1.5" if OS.linux?
     packages << "coremltools==9.0" if OS.mac?
+    packages
+  end
+
+  def worker_python_custom_pip_packages
+    packages = []
+
+    # Some packages need a dedicated pip source, such as Linux CPU-only PyTorch.
+    packages << { package: "torch==2.2.2+cpu", extra_index_url: "https://download.pytorch.org/whl/cpu" } if OS.linux?
     packages
   end
 
@@ -160,6 +170,21 @@ class Labeltruth < Formula
 
   def homebrew_python
     Formula["python@3.11"].opt_bin/"python3.11"
+  end
+
+  def install_worker_python_environment
+    # Build the managed venv after Homebrew's linkage fixer has finished.
+    rm_r libexec/"worker-python" if (libexec/"worker-python").exist?
+    system homebrew_python, "-m", "venv", libexec/"worker-python"
+    system worker_python, "-m", "pip", "install", "--upgrade", "pip"
+    constraint_file = libexec/"worker-python-constraints.txt"
+    constraint_file.write worker_python_constraints.join("\n") + "\n"
+    worker_python_custom_pip_packages.each do |package_config|
+      pip_args = ["-m", "pip", "install", "--constraint", constraint_file]
+      pip_args += ["--extra-index-url", package_config[:extra_index_url]] if package_config[:extra_index_url]
+      system worker_python, *pip_args, package_config[:package]
+    end
+    system worker_python, "-m", "pip", "install", "--constraint", constraint_file, *worker_python_packages unless worker_python_packages.empty?
   end
 
   def patch_compiled_worker_probe
@@ -233,14 +258,6 @@ class Labeltruth < Formula
 
     patch_compiled_worker_probe
 
-    # Keep all ML packages in one Python environment so TensorFlow.js,
-    # TensorFlow, and PyTorch import from one interpreter without user config.
-    system homebrew_python, "-m", "venv", libexec/"worker-python"
-    system worker_python, "-m", "pip", "install", "--upgrade", "pip"
-    constraint_file = libexec/"worker-python-constraints.txt"
-    constraint_file.write worker_python_constraints.join("\n") + "\n"
-    system worker_python, "-m", "pip", "install", "--constraint", constraint_file, *worker_python_packages
-
     # TypeScript's compiler does not set the executable bit on output files.
     chmod 0755, libexec/"dist/bin/cli.js"
 
@@ -254,8 +271,20 @@ class Labeltruth < Formula
     chmod 0755, bin/"labeltruth"
   end
 
+  def post_install
+    # Keep all ML packages in one interpreter without exposing user config.
+    install_worker_python_environment
+  end
+
   test do
     assert_match "labeltruth", shell_output("#{bin}/labeltruth --help")
+
+    # Verify native Node ML dependencies ship binaries for this Homebrew platform.
+    native_node_probe = <<~JS
+      require("#{libexec}/node_modules/onnxruntime-node");
+      require("#{libexec}/node_modules/sharp");
+    JS
+    system Formula["node"].opt_bin/"node", "-e", native_node_probe
 
     python_probe = <<~PYTHON
       import importlib
@@ -271,6 +300,8 @@ class Labeltruth < Formula
           process.exit(ok ? 0 : 1);
       });
     JS
-    system({ "LABELTRUTH_PYTHON" => worker_python.to_s }, Formula["node"].opt_bin/"node", "-e", capability_probe)
+    with_env(LABELTRUTH_PYTHON: worker_python.to_s) do
+      system Formula["node"].opt_bin/"node", "-e", capability_probe
+    end
   end
 end
