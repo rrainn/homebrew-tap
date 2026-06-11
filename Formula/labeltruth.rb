@@ -53,9 +53,13 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.14"
+  version "0.0.15"
 
   depends_on "node"
+  depends_on "libffi" => :test
+  depends_on "libnghttp3" => :test
+  depends_on "libngtcp2" => :test
+  depends_on "sqlite" => :test
   depends_on "python@3.11"
 
 
@@ -66,25 +70,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.14/labeltruth-cli-0.0.14-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.15/labeltruth-cli-0.0.15-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "9b3417b8ef40b3d19b7cb864a170e4623f0eb4393a101cc0ff5ea405a0094083"
+      sha256 "e4bc40a8229d9ff841b1c07867fc4957ef3159b0c9b5271109a88af2ec3707a7"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.14/labeltruth-cli-0.0.14-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.15/labeltruth-cli-0.0.15-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "b9f372f12cc33246e5e5b91792a55c47ed62b514c735904436846d107d50ae93"
+      sha256 "441573e8e514fbde937ecb0f5b5d158dd69a1cb8049b2d916706e5430cbabdc8"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.14/labeltruth-cli-0.0.14-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.15/labeltruth-cli-0.0.15-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "6694f3aad5eca1c411503c37282a0acb57565980d5598ef66d36f9ad8754f7d1"
+      sha256 "79f7c5918ae2cc71d9085bff2d55095f31acef9101c793f7352bc0997afc4a87"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.14/labeltruth-cli-0.0.14-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.15/labeltruth-cli-0.0.15-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "c21e2f9efa05ec902aa97878f75800a0b5a2621e99e0ad81f47789dc85eb4033"
+      sha256 "a3b5ff688a8db361a03dc7199a657b06c7b5b5e26ed1288375c743fd43eededf"
     end
   end
 
