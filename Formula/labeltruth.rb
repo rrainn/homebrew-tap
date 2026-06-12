@@ -53,7 +53,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.23"
+  version "0.0.24"
 
   depends_on "node"
   depends_on "libffi" => :test
@@ -70,25 +70,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.23/labeltruth-cli-0.0.23-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.24/labeltruth-cli-0.0.24-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "77a2528ca02fd2f0baa627a11d578aee67de7bcdfc8a056c10d18f52941d7e24"
+      sha256 "3c3fdbb6e012fdbf7635d1a98eb45913018d40d39151d57c7a3b62aebd702ee6"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.23/labeltruth-cli-0.0.23-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.24/labeltruth-cli-0.0.24-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "0a8c9bb87de0c5648316745cefe2ef0e8d5a0f51584e5e7486be2aed7089e33c"
+      sha256 "b92534a942330a54d52b4df646f7172a366a01461a3a3b1a6ed5dc14cd069082"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.23/labeltruth-cli-0.0.23-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.24/labeltruth-cli-0.0.24-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "e08ed0f87a69b3d66db285283da505a1996378555b7b7e900dc1001aa8264a40"
+      sha256 "7bb0bee5735e8b7673a16a4c2e6a4b2b7f7932ebe1d2186264241a78ff78672d"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.23/labeltruth-cli-0.0.23-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.24/labeltruth-cli-0.0.24-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "e9db77332e75986874bce1c3b0896259a628b8e28c5ffa376933dfd7a1b2ad44"
+      sha256 "2dec763b4616e242fa35d1e94262fd0d4f879b0dbb24d773c586d69415529013"
     end
   end
 
