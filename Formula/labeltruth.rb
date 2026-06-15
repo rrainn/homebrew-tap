@@ -53,7 +53,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.25"
+  version "0.0.27"
 
   depends_on "node"
   depends_on "libffi" => :test
@@ -70,25 +70,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.25/labeltruth-cli-0.0.25-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.27/labeltruth-cli-0.0.27-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "9b7c48855b5c5de454c208a758afb42c772b509372faa486d429f4a321dd41fb"
+      sha256 "86a6cfe5f67c07b366a4c916e7ffced97fa73696f58d484126fc80bc6a579cf6"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.25/labeltruth-cli-0.0.25-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.27/labeltruth-cli-0.0.27-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "0968f7c9506e705d6e1433ee76dfc75e1800df5ca71958df19a8e8ce05894d59"
+      sha256 "68a0a7ebf9c1075fa5eaf0eb82c94ebb5decd313b380fed6ccc1d25a3e49985f"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.25/labeltruth-cli-0.0.25-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.27/labeltruth-cli-0.0.27-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "5031d52ec2526b1c292f13bd670265a7616bec0b2c435db56c29995c1db1dfd3"
+      sha256 "36a60d481b6e709cdcb06adef1b5257b507a309f16200fbc786cf54a01546317"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.25/labeltruth-cli-0.0.25-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.27/labeltruth-cli-0.0.27-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "401a3e2460bf904d11200f62d3481cb7360df70d9615f3a2e18d5a686ce3aef2"
+      sha256 "5af821ded0d90273c1cbdcfdb3472780961e08379e2345651f2be605e591f4bf"
     end
   end
 
@@ -191,6 +191,11 @@ class Labeltruth < Formula
     ]
   end
 
+  def pip_binary_policy_args
+    # cryptography sdists require Rust, so release installs must use wheels.
+    ["--only-binary", "cryptography"]
+  end
+
   def worker_python
     libexec/"worker-python/bin/python3"
   end
@@ -207,11 +212,11 @@ class Labeltruth < Formula
     constraint_file = libexec/"worker-python-constraints.txt"
     constraint_file.write worker_python_constraints.join("\n") + "\n"
     worker_python_custom_pip_packages.each do |package_config|
-      pip_args = ["-m", "pip", "install", "--constraint", constraint_file]
+      pip_args = ["-m", "pip", "install", *pip_binary_policy_args, "--constraint", constraint_file]
       pip_args += ["--extra-index-url", package_config[:extra_index_url]] if package_config[:extra_index_url]
       system worker_python, *pip_args, package_config[:package]
     end
-    system worker_python, "-m", "pip", "install", "--constraint", constraint_file, *worker_python_packages unless worker_python_packages.empty?
+    system worker_python, "-m", "pip", "install", *pip_binary_policy_args, "--constraint", constraint_file, *worker_python_packages unless worker_python_packages.empty?
   end
 
   def patch_compiled_worker_probe
