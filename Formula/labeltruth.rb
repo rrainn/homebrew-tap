@@ -53,7 +53,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.37"
+  version "0.0.39"
 
   depends_on "node"
   depends_on "libffi" => :test
@@ -70,25 +70,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.37/labeltruth-cli-0.0.37-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.39/labeltruth-cli-0.0.39-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "b4f93eeb3abce93801c6eb04a55a3821b913fa28759d021bc272c0b7098fb94c"
+      sha256 "25eb5875ef772b6130c6247923c1be68eb8bc17549ac738e412e1de7996c609b"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.37/labeltruth-cli-0.0.37-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.39/labeltruth-cli-0.0.39-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "4560f5f558bbc0b6032d460dd6057a79705c99888288a6afb2c0bcaee59ee20f"
+      sha256 "6f165434a365eea922621f781f029fef198aebb38b730810f1b3dd0950a84f35"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.37/labeltruth-cli-0.0.37-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.39/labeltruth-cli-0.0.39-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "2214599115a4c24266e126b998f270cce2f9d8deebb842ad8b85200540e49e3f"
+      sha256 "da886a86a0c28955a88d647ce568431d62bea7e81224582b8a59b0c6155a43de"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.37/labeltruth-cli-0.0.37-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.39/labeltruth-cli-0.0.39-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "23eec9eeb2fe64b572f6a1a056b04afd2638af875202960b251996d89a3eba47"
+      sha256 "f1d535e67e9c04105a44b68b3a6d221b5458c39b7965fd8ce886bcfbecce3bfb"
     end
   end
 
@@ -127,8 +127,8 @@ class Labeltruth < Formula
     packages = []
 
     # Some packages need a dedicated pip source, such as Linux CPU-only PyTorch.
-    packages << { package: "torch==2.2.2+cpu", extra_index_url: "https://download.pytorch.org/whl/cpu" } if OS.linux? && Hardware::CPU.intel?
-    packages << { package: "torchvision==0.17.2+cpu", extra_index_url: "https://download.pytorch.org/whl/cpu" } if OS.linux? && Hardware::CPU.intel?
+    packages << { package: "torch==2.2.2+cu121", extra_index_url: "https://download.pytorch.org/whl/cu121" } if OS.linux? && Hardware::CPU.intel?
+    packages << { package: "torchvision==0.17.2+cu121", extra_index_url: "https://download.pytorch.org/whl/cu121" } if OS.linux? && Hardware::CPU.intel?
     packages
   end
 
