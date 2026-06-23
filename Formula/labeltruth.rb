@@ -53,7 +53,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.48"
+  version "0.0.49"
 
   depends_on "node"
   depends_on "libffi" => :test
@@ -70,25 +70,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.48/labeltruth-cli-0.0.48-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.49/labeltruth-cli-0.0.49-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "68570ee2c1039fb637968a52de93ecf8b24269db3c943d437e60e4932c3cf6ec"
+      sha256 "ca7b8c3cf266de28477f922511719ad21d4c47a118548cc38075e4299ad6fed2"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.48/labeltruth-cli-0.0.48-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.49/labeltruth-cli-0.0.49-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "511f6b32e974af175b257ad85c64cf8a6618acb42a9fa79a46f74dd3d1aaa006"
+      sha256 "6b9a04e247da32ef440547b920c7031b6486af6f3f3dba13a9bf3e9b8f255a8e"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.48/labeltruth-cli-0.0.48-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.49/labeltruth-cli-0.0.49-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "bf0589b1a21c6a683b5e63f04cf2209c3c2e2013f191db278d3914ab0988e1d1"
+      sha256 "6de7eb4836d55b254e89007416ef687db75da507b95ea910bb0dd7ee86545e0c"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.48/labeltruth-cli-0.0.48-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.49/labeltruth-cli-0.0.49-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "55b3aa479c39e543071f3394d8c984446444c247d82053a4524c0f76b5a44977"
+      sha256 "9c042f7c2bf7dc02930012dd5d0437e77a8c78ade53dc9b4eda7f7fe5e6ec8c6"
     end
   end
 
@@ -298,6 +298,16 @@ class Labeltruth < Formula
     (bin/"labeltruth").write <<~EOS
       #!/bin/bash
       export LABELTRUTH_PYTHON="${LABELTRUTH_PYTHON:-#{worker_python}}"
+      if [[ "$OSTYPE" == "linux"* ]]; then
+        # ONNX Runtime's CUDA provider needs CUDA libraries from Python wheels.
+        for cuda_lib_dir in "#{libexec}/worker-python/lib"/python*/site-packages/nvidia/*/lib; do
+          [[ -d "$cuda_lib_dir" ]] || continue
+          case ":${LD_LIBRARY_PATH:-}:" in
+            *:"$cuda_lib_dir":*) ;;
+            *) export LD_LIBRARY_PATH="$cuda_lib_dir:${LD_LIBRARY_PATH:-}" ;;
+          esac
+        done
+      fi
       if [[ "$OSTYPE" == "linux"* && -d "/usr/lib/wsl/lib" ]]; then
         # WSL stores the NVIDIA driver shim outside Homebrew's default loader path.
         case ":${LD_LIBRARY_PATH:-}:" in
