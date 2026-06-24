@@ -53,7 +53,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.56"
+  version "0.0.57"
 
   depends_on "node"
   depends_on "libffi" => :test
@@ -70,25 +70,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.56/labeltruth-cli-0.0.56-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.57/labeltruth-cli-0.0.57-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "1111932d3301e4c139513c2c97b586a8e1c080759ca411b0a3d82ef6418aef53"
+      sha256 "416d56896bd2907d20fc8e2e0dd5d128228c31f73ede4a7d99bb66818d245d78"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.56/labeltruth-cli-0.0.56-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.57/labeltruth-cli-0.0.57-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "9e07b778ee18a4e6cf2635ce1d0f1b4077a4e31282cee5f6abcc53e2bf6227e5"
+      sha256 "0f31b5b71bd718a8056f4c74065f6154fdb96fa9e6be1e68a38870c5c0407b99"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.56/labeltruth-cli-0.0.56-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.57/labeltruth-cli-0.0.57-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "c2295a413651c4ff8783307b305e92fc874a9a2b941d667326d960b1b67b59ba"
+      sha256 "8d2e83c52271974f55bb44efd5d1484868232352291ace4a118534886878d2f1"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.56/labeltruth-cli-0.0.56-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.57/labeltruth-cli-0.0.57-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "018d0ab75484ada0faeaefd49ad6c6ed1bc9fc3527895f4e05d06a34f37bfc7f"
+      sha256 "5b032cbebd4f168474433018042b7abd622279756160787d79e425845f660f84"
     end
   end
 
@@ -96,6 +96,7 @@ class Labeltruth < Formula
     packages = %w[
       onnx==1.17.0
       onnxscript==0.2.6
+      optuna==4.8.0
       Pillow==12.2.0
       requests==2.34.2
       tensorboard==2.15.2
@@ -136,6 +137,7 @@ class Labeltruth < Formula
     imports = %w[
       onnx
       onnxscript
+      optuna
       PIL
       requests
       tensorboard
