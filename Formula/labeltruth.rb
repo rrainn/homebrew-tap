@@ -53,9 +53,8 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.63"
+  version "0.0.65"
 
-  depends_on "node"
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
   depends_on "libngtcp2" => :test
@@ -70,25 +69,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.63/labeltruth-cli-0.0.63-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.65/labeltruth-cli-0.0.65-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "59e0516bc8cb45c81a1df852d67c1ca1a3c9fa4bb31ce72f7f3296d7332e6d38"
+      sha256 "5a4f5fb2d9bf5d2d09413ffd04c9b3181880d17b66f61891bbb53ff7e17f7fd8"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.63/labeltruth-cli-0.0.63-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.65/labeltruth-cli-0.0.65-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "bc216eb727f9136b8439c7b792b5653599e6a09299ba6622854a69785bdb13fb"
+      sha256 "76363da603e16d1e44b69847d5be96c95b862e5d32c8053cc23e13fe3fc35393"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.63/labeltruth-cli-0.0.63-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.65/labeltruth-cli-0.0.65-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "96731dbb498a9f4c050b128a6594ffcc53adbda9a77fb70894232790afd86ae6"
+      sha256 "eca14a67134ad9627a97f6b40fdae501458abd6a954667e03e7a470988f97f6d"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.63/labeltruth-cli-0.0.63-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.65/labeltruth-cli-0.0.65-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "3056e13d3eafd6b6c92eaa630251767a5a2c9c71896a817c18ea21a86476f8a1"
+      sha256 "439e39dd0eef64864814091c3f74355c03a533dd177215753e4332c0cb41de99"
     end
   end
 
@@ -202,6 +201,14 @@ class Labeltruth < Formula
     libexec/"worker-python/bin/python3"
   end
 
+  def bundled_node
+    libexec/"node/bin/node"
+  end
+
+  def bundled_node_version
+    "25.9.0"
+  end
+
   def homebrew_python
     Formula["python@3.11"].opt_bin/"python3.11"
   end
@@ -294,6 +301,7 @@ class Labeltruth < Formula
 
     # TypeScript's compiler does not set the executable bit on output files.
     chmod 0755, libexec/"dist/bin/cli.js"
+    chmod 0755, bundled_node
 
     # Set LABELTRUTH_PYTHON by default so worker users do not need shell config.
     # A user-supplied LABELTRUTH_PYTHON still wins for custom Python setups.
@@ -317,7 +325,7 @@ class Labeltruth < Formula
           *) export LD_LIBRARY_PATH="/usr/lib/wsl/lib:${LD_LIBRARY_PATH:-}" ;;
         esac
       fi
-      exec "#{Formula["node"].opt_bin}/node" "#{libexec}/dist/bin/cli.js" "$@"
+      exec "#{bundled_node}" "#{libexec}/dist/bin/cli.js" "$@"
     EOS
     chmod 0755, bin/"labeltruth"
   end
@@ -329,13 +337,14 @@ class Labeltruth < Formula
 
   test do
     assert_match "labeltruth", shell_output("#{bin}/labeltruth --help")
+    assert_match "v#{bundled_node_version}", shell_output("#{bundled_node} --version")
 
     # Verify native Node ML dependencies ship binaries for this Homebrew platform.
     native_node_probe = <<~JS
       require("#{libexec}/node_modules/onnxruntime-node");
       require("#{libexec}/node_modules/sharp");
     JS
-    system Formula["node"].opt_bin/"node", "-e", native_node_probe
+    system bundled_node, "-e", native_node_probe
 
     python_probe = <<~PYTHON
       import importlib
@@ -352,7 +361,7 @@ class Labeltruth < Formula
       });
     JS
     with_env(LABELTRUTH_PYTHON: worker_python.to_s) do
-      system Formula["node"].opt_bin/"node", "-e", capability_probe
+      system bundled_node, "-e", capability_probe
     end
   end
 end
