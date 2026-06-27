@@ -53,7 +53,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.65"
+  version "0.0.66"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -69,25 +69,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.65/labeltruth-cli-0.0.65-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.66/labeltruth-cli-0.0.66-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "5a4f5fb2d9bf5d2d09413ffd04c9b3181880d17b66f61891bbb53ff7e17f7fd8"
+      sha256 "2b29d1d718e7ff6f9e6a384175df74e48f28d758fc44b14ec618abd2dd3f5c6d"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.65/labeltruth-cli-0.0.65-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.66/labeltruth-cli-0.0.66-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "76363da603e16d1e44b69847d5be96c95b862e5d32c8053cc23e13fe3fc35393"
+      sha256 "813a8550c6a2322850ad299a2cb7abfb9ccfae0a6257feb016d979c6edc15ed5"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.65/labeltruth-cli-0.0.65-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.66/labeltruth-cli-0.0.66-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "eca14a67134ad9627a97f6b40fdae501458abd6a954667e03e7a470988f97f6d"
+      sha256 "9438790cbea4fe952cf5e5d5947fe3759920edbb0da82f0ab13d8e9ed2cba323"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.65/labeltruth-cli-0.0.65-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.66/labeltruth-cli-0.0.66-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "439e39dd0eef64864814091c3f74355c03a533dd177215753e4332c0cb41de99"
+      sha256 "51afc312e90e25112ae03e53311765286243bc3a49d1985255f9a5426b326bd5"
     end
   end
 
