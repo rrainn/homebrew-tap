@@ -6,19 +6,32 @@
 require "json"
 require "net/http"
 
-# Custom download strategy that authenticates with GitHub API to download
-# private repository release assets. The default CurlDownloadStrategy cannot
-# access private GitHub release assets.
+# Custom download strategy for private release assets. It prefers the GitHub API
+# token path and falls back to the LabelTruth server proxy for worker hosts.
 class GitHubPrivateAssetDownloadStrategy < CurlDownloadStrategy
+  # Treat blank environment variables the same as missing ones.
+  def env_value(name)
+    value = ENV.fetch(name, nil)
+    return nil if value.nil? || value.strip.empty?
+
+    value
+  end
+
   # Override _fetch to authenticate against the GitHub API.
   # @param url [String] the browser download URL from the formula
   # @param resolved_url [String] unused; the API URL is derived from url instead
   # @param timeout [Integer, nil] download timeout forwarded to curl
   def _fetch(url:, resolved_url:, timeout:)
-    token = ENV.fetch("HOMEBREW_GITHUB_API_TOKEN", nil)
-    raise CurlDownloadStrategyError,
-          "HOMEBREW_GITHUB_API_TOKEN must be set to install labeltruth." unless token
+    token = env_value("HOMEBREW_GITHUB_API_TOKEN")
+    if token
+      fetch_from_github(url, token, timeout)
+    else
+      fetch_from_labeltruth_proxy(url, timeout)
+    end
+  end
 
+  # Download a private release asset directly from GitHub.
+  def fetch_from_github(url, token, timeout)
     # Parse owner/repo/tag/filename from the GitHub release browser download URL.
     match = url.match(%r{github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/(.+)})
     raise CurlDownloadStrategyError, "Unexpected URL format: #{url}" unless match
@@ -48,12 +61,69 @@ class GitHubPrivateAssetDownloadStrategy < CurlDownloadStrategy
                   to: temporary_path,
                   timeout: timeout
   end
+
+  # Download a release asset through the authenticated LabelTruth server proxy.
+  def fetch_from_labeltruth_proxy(url, timeout)
+    proxy_url = resolve_labeltruth_proxy_url(url)
+    headers = resolve_labeltruth_proxy_headers
+    ohai "Downloading #{File.basename(URI(proxy_url).path)} via LabelTruth proxy"
+    curl_download proxy_url, *headers, to: temporary_path, timeout: timeout
+  end
+
+  # Build the proxy URL from either a GitHub asset URL or a server-rendered URL.
+  def resolve_labeltruth_proxy_url(url)
+    return url if url.match?(%r{/api/ml-workers/cli-update/assets/[^/]+/[^/]+$})
+
+    server_url = env_value("LABELTRUTH_URL")
+    raise CurlDownloadStrategyError,
+          "Set HOMEBREW_GITHUB_API_TOKEN or LABELTRUTH_URL plus LabelTruth worker auth to install labeltruth." unless server_url
+
+    match = url.match(%r{github\.com/[^/]+/[^/]+/releases/download/([^/]+)/(.+)})
+    raise CurlDownloadStrategyError, "Unexpected URL format: #{url}" unless match
+
+    tag, filename = match.captures
+    "#{server_url.sub(%r{/+$}, "")}/api/ml-workers/cli-update/assets/#{tag}/#{filename}"
+  end
+
+  # Return curl headers for the LabelTruth proxy without exposing token values.
+  def resolve_labeltruth_proxy_headers
+    update_token = env_value("LABELTRUTH_UPDATE_TOKEN")
+    return ["--header", "X-Worker-Token: #{update_token}"] if update_token
+
+    worker_token = env_value("LABELTRUTH_WORKER_TOKEN") || read_worker_token_from_config
+    return ["--header", "X-Worker-Token: #{worker_token}"] if worker_token
+
+    raise CurlDownloadStrategyError,
+          "Set LABELTRUTH_UPDATE_TOKEN, LABELTRUTH_WORKER_TOKEN, or configure one LabelTruth worker before using the proxy."
+  end
+
+  # Read worker auth from the normal LabelTruth CLI config when unambiguous.
+  def read_worker_token_from_config
+    config_path = ENV.fetch("LABELTRUTH_CONFIG", File.join(Dir.home, ".labeltruth", "cli-config.json"))
+    return nil unless File.exist?(config_path)
+
+    config = JSON.parse(File.read(config_path))
+    workers = config["workers"]
+    return nil unless workers.is_a?(Hash) && !workers.empty?
+
+    labeltruth_url = env_value("LABELTRUTH_URL")&.sub(%r{/+$}, "")
+    candidates = workers.values.select do |worker|
+      endpoint = worker["endpoint"].to_s.sub(%r{/+$}, "")
+      labeltruth_url.nil? || endpoint == labeltruth_url
+    end
+    candidates = workers.values if candidates.empty? && workers.length == 1
+    return nil unless candidates.length == 1
+
+    candidates.first["token"]
+  rescue JSON::ParserError
+    nil
+  end
 end
 
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.71"
+  version "0.0.72"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -69,25 +139,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.71/labeltruth-cli-0.0.71-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.72/labeltruth-cli-0.0.72-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "a56b79aba7b2923c70613c2f0bc6d25cf6efcbd3c8b9abd99ea96ed8e73228c1"
+      sha256 "5006497c28a360a35ee01abe97e67f865207dc8e3cc1cb53ec959811fcb62da9"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.71/labeltruth-cli-0.0.71-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.72/labeltruth-cli-0.0.72-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "ee6e68a6ca1b3e9e1b787b18f7da37288e2ce7c27cd190ed9fa38089e79ce1aa"
+      sha256 "4fb7619ce354f387a133b61594295f04398fbe720fbe4d0ea7b0a0213840d812"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.71/labeltruth-cli-0.0.71-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.72/labeltruth-cli-0.0.72-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "62dd78d1f37e52196e6bb62f9a215d5de691b3fb10a50060a89aa4b3a25daa4c"
+      sha256 "622502fb2373183966a57d47f4425bca87bd8f4a9fa21b34c1983b0843f8de30"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.71/labeltruth-cli-0.0.71-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.72/labeltruth-cli-0.0.72-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "59839d45ee4e603c73896e95e16a800b4ebe10e671d1c048fb5eadb8eeed170c"
+      sha256 "8ade524f0ac986e25cb508ec95748eeb2a2c663e67c6cf4b7e58c42fd7ae7460"
     end
   end
 
@@ -127,8 +197,8 @@ class Labeltruth < Formula
     packages = []
 
     # Some packages need a dedicated pip source, such as Linux CPU-only PyTorch.
-    packages << { package: "torch==2.2.2+cu121", extra_index_url: "https://download.pytorch.org/whl/cu121" } if OS.linux? && Hardware::CPU.intel?
-    packages << { package: "torchvision==0.17.2+cu121", extra_index_url: "https://download.pytorch.org/whl/cu121" } if OS.linux? && Hardware::CPU.intel?
+    packages << { package: "torch==2.6.0+cu124", extra_index_url: "https://download.pytorch.org/whl/cu124" } if OS.linux? && Hardware::CPU.intel?
+    packages << { package: "torchvision==0.21.0+cu124", extra_index_url: "https://download.pytorch.org/whl/cu124" } if OS.linux? && Hardware::CPU.intel?
     packages
   end
 
@@ -193,8 +263,8 @@ class Labeltruth < Formula
   end
 
   def pip_binary_policy_args
-    # cryptography sdists require Rust, so release installs must use wheels.
-    ["--only-binary", "cryptography"]
+    # Avoid caching large CUDA wheels and keep cryptography on binary wheels.
+    ["--no-cache-dir", "--only-binary", "cryptography"]
   end
 
   def worker_python
