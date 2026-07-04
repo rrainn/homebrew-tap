@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.83"
+  version "0.0.84"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -139,25 +139,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.83/labeltruth-cli-0.0.83-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.84/labeltruth-cli-0.0.84-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "8e830234e99f726c5e4444b9cdbe6bd46338c771d3bceedcd055305768665def"
+      sha256 "232ad347637c05886cc35b88777a7c2c9f04023491db92989beabc2d8ff78692"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.83/labeltruth-cli-0.0.83-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.84/labeltruth-cli-0.0.84-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "3b216f8a32d16d6e71a1d151422a56e73229d102ddb39f0fef55d8cb7ee64401"
+      sha256 "99d47d7ea9e32c1e4c08dc85ad23719760b31454373c78f399e7f55be51e01a8"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.83/labeltruth-cli-0.0.83-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.84/labeltruth-cli-0.0.84-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "42c5b3b53ed0366b2a87d7684a70b86ac8bddbb55824f4251c02f2faf5e49d85"
+      sha256 "d8ce12dffd06114be0d56c25b4d2b20358278ed24c0dab88cb34005d25c23335"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.83/labeltruth-cli-0.0.83-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.84/labeltruth-cli-0.0.84-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "91decd743b8bdfe3f85fdc88220fc3660fba6dfe001a870bb2811438ec90ad0c"
+      sha256 "83024b9f38591ac3211ebc207f06da20de8882d4994d3188aaf9ca7e7d021e11"
     end
   end
 
