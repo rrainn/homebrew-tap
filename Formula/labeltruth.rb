@@ -123,11 +123,12 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.86"
+  version "0.0.87"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
   depends_on "libngtcp2" => :test
+  depends_on "jq"
   depends_on "sqlite" => :test
   depends_on "python@3.11"
 
@@ -139,25 +140,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.86/labeltruth-cli-0.0.86-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.87/labeltruth-cli-0.0.87-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "7e94c8c1976fed713c36e492de52c8a7b7eef4b41ca75027f0cd593c407e4269"
+      sha256 "5dbe5ea86d0267473bfd76c457b8ef1668c75f05072ba0835f2d286ddf65d531"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.86/labeltruth-cli-0.0.86-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.87/labeltruth-cli-0.0.87-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "b5f2086beccaad68181bd3015f1f1ebc6fc2722a69d5b12b2fe6468661229f4f"
+      sha256 "058f038d75a8b9520a95db2616c3dbcae5b0a1a2d9028fa72ad0b1d8c8b11181"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.86/labeltruth-cli-0.0.86-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.87/labeltruth-cli-0.0.87-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "3ef5d3ada1c73c839fe734cad0b4a6d5293832aa0470d9fb24794d740229561e"
+      sha256 "7f5ed327c82859eac936abe87b0278a6686379b911c01abfd9f614578279b100"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.86/labeltruth-cli-0.0.86-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.87/labeltruth-cli-0.0.87-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "272f7e5e8b7bbff848bec150a907d5f17e78b207c172fb6a575b9c8e075496ad"
+      sha256 "0848e7eb8ba851674e640a415c611a53680c1a68467153b91ee13f0770ae4716"
     end
   end
 
@@ -378,6 +379,7 @@ class Labeltruth < Formula
     (bin/"labeltruth").write <<~EOS
       #!/bin/bash
       export LABELTRUTH_PYTHON="${LABELTRUTH_PYTHON:-#{worker_python}}"
+      export LABELTRUTH_JQ="${LABELTRUTH_JQ:-#{Formula["jq"].opt_bin/"jq"}}"
       if [[ "$OSTYPE" == "linux"* ]]; then
         # ONNX Runtime's CUDA provider needs CUDA libraries from Python wheels.
         for cuda_lib_dir in "#{libexec}/worker-python/lib"/python*/site-packages/nvidia/*/lib; do
