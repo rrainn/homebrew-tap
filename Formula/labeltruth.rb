@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.92"
+  version "0.0.93"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -140,25 +140,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.92/labeltruth-cli-0.0.92-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.93/labeltruth-cli-0.0.93-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "c322dfa665c2abc0ae6555b0055979c7700368cf04fd9d26bacea5cf107d0b7b"
+      sha256 "8b5b3a22aafe42bfdcb39f4d70d517db545c629dece9f373a46fb15318099be5"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.92/labeltruth-cli-0.0.92-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.93/labeltruth-cli-0.0.93-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "5c51f7a2f78a1eeb7dd72fdf640df22b505f4ea68da6f2d6ce90dbff1b98d76d"
+      sha256 "54f15f156d33573d10a4092a0c4f90d331f1f0575137baefba76fb13e59d642b"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.92/labeltruth-cli-0.0.92-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.93/labeltruth-cli-0.0.93-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "70870d16cd1cbb8f811d85224065386b9dd868a703ab73cdeb58ae13d20e1254"
+      sha256 "82942011a24b04bc25cddfc89b6f94cb4bcec2a957a66cef54b26fd27a15638c"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.92/labeltruth-cli-0.0.92-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.93/labeltruth-cli-0.0.93-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "662a9b30edec302ee2bb93c7553f23258dc907f3baa7bb333b9b8b74f88eb2b6"
+      sha256 "a28f5c7610c25471ad8864d3ba0dfe1edde08f437eccb112c1c81e651bcf39b3"
     end
   end
 
@@ -168,6 +168,8 @@ class Labeltruth < Formula
       onnxscript==0.2.6
       optuna==4.8.0
       Pillow==12.2.0
+      pillow-heif==1.4.0
+      rawpy==0.27.0
       requests==2.34.2
       tensorboard==2.15.2
       tensorflow==2.15.0
@@ -209,6 +211,8 @@ class Labeltruth < Formula
       onnxscript
       optuna
       PIL
+      pillow_heif
+      rawpy
       requests
       tensorboard
       tensorflow
