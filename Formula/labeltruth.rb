@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.99"
+  version "0.0.100"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -140,25 +140,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.99/labeltruth-cli-0.0.99-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.100/labeltruth-cli-0.0.100-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "0908a312a8588524b6da20fde4bc0127304bc1d460c696109face37738b74043"
+      sha256 "e3c5680560e24946448821bb28ef2238db253e123771b87e2706c815f2729ac9"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.99/labeltruth-cli-0.0.99-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.100/labeltruth-cli-0.0.100-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "6d1ae4cfb5a66c1b621b6f1ff92b29259ae45a46a7530ef75c1cbfb788d0e016"
+      sha256 "fc1e3cc39e3747fbd3108d686f466e6d6cd434547b72cbf54b4fd9a57d071fee"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.99/labeltruth-cli-0.0.99-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.100/labeltruth-cli-0.0.100-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "911231669d7176530eb1b6ac73b9f443f60728bcb0f071c19cbbf161d62967d1"
+      sha256 "94d13e206602ed041ea04335bf655cfe632315366915adc36405c31001d29b73"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.99/labeltruth-cli-0.0.99-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.100/labeltruth-cli-0.0.100-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "dd5f7e0eed910513b5b0f283d53b36ce14131bf02c9ad32c3fbbf5cdde9c3851"
+      sha256 "3b7e6c6580fe80b235686fd3af2f5d4afd73a21ed5f3b87c2e9fc423e9db3ce0"
     end
   end
 
