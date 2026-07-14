@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.107"
+  version "0.0.108"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -140,25 +140,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.107/labeltruth-cli-0.0.107-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.108/labeltruth-cli-0.0.108-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "3fbbea93d83a572ca87ddccef1491d89fb6782ad8b6d869bd2a9d5fe0067d43e"
+      sha256 "95f3f2df1c06a68cf0c7e2e99a24584c07831ea32859a483030a5591aac25c15"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.107/labeltruth-cli-0.0.107-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.108/labeltruth-cli-0.0.108-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "56086f91662dd55079916ccb21682efe20e157bba7d2ec4334391da307e97c8c"
+      sha256 "c24b523116b70d12145cd567409fa4d1b2637856e2b8d0e2197acdf8ffe2c197"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.107/labeltruth-cli-0.0.107-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.108/labeltruth-cli-0.0.108-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "c709e694d211b7d04c4a6adc66a4cac828973b844f8b30ef453ce4ba54f1ba3d"
+      sha256 "64e26b8e4cd2be5fb30b1796d52488bb4710c260229de05bc2d16f421acf6e3b"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.107/labeltruth-cli-0.0.107-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.108/labeltruth-cli-0.0.108-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "65a12753246c673374db965820baae991154fcd515baf9dc59ce2fcda7834eda"
+      sha256 "578a7126ac421b7644a40587b974ee0a88c82da06f63a9a2b5170bf2960dd138"
     end
   end
 
@@ -433,9 +433,18 @@ class Labeltruth < Formula
 
     capability_probe = <<~JS
       const { probePythonCapability } = require("#{libexec}/dist/commands/worker.js");
-      probePythonCapability().then((ok) => {
-          console.log(ok ? "true" : "false");
-          process.exit(ok ? 0 : 1);
+      probePythonCapability().then((capability) => {
+          // The structured probe object itself is always truthy, so verify each release requirement.
+          if (capability.pytorchTraining !== true) {
+              throw new Error(`Worker did not advertise PyTorch training: ${JSON.stringify(capability)}`);
+          }
+          if (capability.doctrRecognition !== true) {
+              throw new Error(`Worker did not advertise docTR recognition: ${JSON.stringify(capability)}`);
+          }
+          console.log("Worker Python and docTR capability preflight passed.");
+      }).catch((error) => {
+          console.error(error.message);
+          process.exit(1);
       });
     JS
     with_env(LABELTRUTH_PYTHON: worker_python.to_s) do
