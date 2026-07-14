@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.108"
+  version "0.0.109"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -140,31 +140,33 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.108/labeltruth-cli-0.0.108-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.109/labeltruth-cli-0.0.109-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "95f3f2df1c06a68cf0c7e2e99a24584c07831ea32859a483030a5591aac25c15"
+      sha256 "233023f162cea68b8473f667c1294d0aade53e3c377b39a07fd3754fddd55cf9"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.108/labeltruth-cli-0.0.108-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.109/labeltruth-cli-0.0.109-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "c24b523116b70d12145cd567409fa4d1b2637856e2b8d0e2197acdf8ffe2c197"
+      sha256 "d04e68b80b62a0c6f12fe7751d4fb91dbe1744e868b6bdade5baf16ab827a4f6"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.108/labeltruth-cli-0.0.108-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.109/labeltruth-cli-0.0.109-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "64e26b8e4cd2be5fb30b1796d52488bb4710c260229de05bc2d16f421acf6e3b"
+      sha256 "f2a13644543120953fd571e144617a9ce786a6d34dff019929514a9a28ffff26"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.108/labeltruth-cli-0.0.108-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.109/labeltruth-cli-0.0.109-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "578a7126ac421b7644a40587b974ee0a88c82da06f63a9a2b5170bf2960dd138"
+      sha256 "6b1a505e6c774fe81260eadf138c4d1a30629359a6322e429565bd151c1894b5"
     end
   end
 
   def worker_python_packages
     packages = %w[
       python-doctr==1.0.1
+      transformers==4.49.0
+      safetensors==0.5.3
       onnx==1.17.0
       onnxscript==0.2.6
       optuna==4.8.0
@@ -206,9 +208,19 @@ class Labeltruth < Formula
     packages
   end
 
+  def worker_python_distribution_replacements
+    replacements = []
+
+    # Replace GUI-backed transitive wheels only after pip resolves their dependents.
+    replacements << { package: "opencv-python-headless==4.11.0.86", distribution: "opencv-python-headless", module: "cv2", replaces: %w[opencv-python] } if OS.linux?
+    replacements
+  end
+
   def worker_python_imports
     imports = %w[
       doctr
+      transformers
+      safetensors
       onnx
       onnxscript
       optuna
@@ -303,6 +315,11 @@ class Labeltruth < Formula
       system worker_python, *pip_args, package_config[:package]
     end
     system worker_python, "-m", "pip", "install", *pip_binary_policy_args, "--constraint", constraint_file, *worker_python_packages unless worker_python_packages.empty?
+    worker_python_distribution_replacements.each do |replacement|
+      # A clean owner transition avoids leaving overlapping cv2 wheel files behind.
+      system worker_python, "-m", "pip", "uninstall", "--yes", *replacement[:replaces]
+      system worker_python, "-m", "pip", "install", *pip_binary_policy_args, "--constraint", constraint_file, "--no-deps", replacement[:package]
+    end
   end
 
   def patch_compiled_worker_probe
@@ -424,10 +441,21 @@ class Labeltruth < Formula
     JS
     system bundled_node, "-e", native_node_probe
 
+    replacement_probe_data = worker_python_distribution_replacements.map do |replacement|
+      replacement.slice(:distribution, :module)
+    end
     python_probe = <<~PYTHON
       import importlib
+      import importlib.metadata
       for module_name in #{worker_python_imports.inspect}:
           importlib.import_module(module_name)
+      package_owners = importlib.metadata.packages_distributions()
+      for replacement in #{JSON.generate(replacement_probe_data)}:
+          importlib.import_module(replacement["module"])
+          owners = sorted(name.lower().replace("_", "-") for name in package_owners.get(replacement["module"], []))
+          expected = [replacement["distribution"].lower().replace("_", "-")]
+          if owners != expected:
+              raise RuntimeError(f"{replacement['module']} owners were {owners}, expected {expected}")
     PYTHON
     system worker_python, "-c", python_probe
 
@@ -441,7 +469,10 @@ class Labeltruth < Formula
           if (capability.doctrRecognition !== true) {
               throw new Error(`Worker did not advertise docTR recognition: ${JSON.stringify(capability)}`);
           }
-          console.log("Worker Python and docTR capability preflight passed.");
+          if (capability.layoutLmV3 !== true) {
+              throw new Error(`Worker did not advertise LayoutLMv3: ${JSON.stringify(capability)}`);
+          }
+          console.log("Worker Python, docTR, and LayoutLMv3 capability preflight passed.");
       }).catch((error) => {
           console.error(error.message);
           process.exit(1);
