@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.113"
+  version "0.0.114"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -140,25 +140,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.113/labeltruth-cli-0.0.113-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.114/labeltruth-cli-0.0.114-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "423cdf6290a588aa3b33d32a8e08e7f00b84167eae4030cfebe1be2c7730f18b"
+      sha256 "4c9d1048d9a4de1832db6d38301045695a7a328020a9423b31385682de619b3e"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.113/labeltruth-cli-0.0.113-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.114/labeltruth-cli-0.0.114-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "ab229362c54712876b3be89fa0d66009887f79d6ab885b41e89c83db5f025976"
+      sha256 "a0f3536ec59e960878be0e1d6bff27873747e4975f7c5733e58e3a9ffd5521bb"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.113/labeltruth-cli-0.0.113-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.114/labeltruth-cli-0.0.114-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "bcbb6a7795b14ff53c6922a869dd32cd7da9c17bab67685f9b03e618883719ec"
+      sha256 "c3d13fc7b8ca37f6da6ad75851b6ed6b77d1b1808fea7cc02a5a4632621c4dbb"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.113/labeltruth-cli-0.0.113-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.114/labeltruth-cli-0.0.114-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "cf7a46c1db90dfff451958dc1a28673feb4de7cb2a876a44ff177eea47d0d585"
+      sha256 "8aa945a03d79cd410201d20727ab789841f747faa1aa418a9a537613370be567"
     end
   end
 
@@ -481,5 +481,8 @@ class Labeltruth < Formula
     with_env(LABELTRUTH_PYTHON: worker_python.to_s) do
       system bundled_node, "-e", capability_probe
     end
+
+    # Load both immutable recognizer checkpoints and run the accurate PARSeq OCR preset before a release can publish.
+    system worker_python, libexec/"dist/python/doctr-recognition-smoke.py"
   end
 end
