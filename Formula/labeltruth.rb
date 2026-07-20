@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.124"
+  version "0.0.125"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -140,25 +140,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.124/labeltruth-cli-0.0.124-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.125/labeltruth-cli-0.0.125-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "af5f55856b4de05984e8e5c1e2e6c234c2f76326299af486eca5cccb70aafd2b"
+      sha256 "d84cc06f7be3c3d816a05c12e22b41cecdbf208621d7f185f4ebd2afb667e311"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.124/labeltruth-cli-0.0.124-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.125/labeltruth-cli-0.0.125-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "e3dcafa061e85fba90dd5988b238a69467ff412c07eb49e33c7e023898c09c07"
+      sha256 "18b14daa6b4e12c7cfdef640611a00b3093d0f8e817c4e8177a0ad8d397370c0"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.124/labeltruth-cli-0.0.124-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.125/labeltruth-cli-0.0.125-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "3d9e453d6178ba19102458bb7b317f786a5fca3a0ef0569238147260a26d478e"
+      sha256 "73ce494ee22e9116b272a73866cb9cd13f2586cbda74c845e8e47ef59c003255"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.124/labeltruth-cli-0.0.124-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.125/labeltruth-cli-0.0.125-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "1dc48c6d5e61303187c106750800c0a16de84e7614f44c15e0fd9645e9e5193e"
+      sha256 "fb1b1d8c17174986a02ae9f662839cedcf40286818d4f0c3f8ae24b4b0fe7f55"
     end
   end
 
@@ -440,6 +440,9 @@ class Labeltruth < Formula
       require("#{libexec}/node_modules/sharp");
     JS
     system bundled_node, "-e", native_node_probe
+
+    # Exercise the installed tarball's real PDF.js/canvas tree with only synthetic document data.
+    system bundled_node, libexec/"dist/smokes/localInferencePdfSmoke.js"
 
     replacement_probe_data = worker_python_distribution_replacements.map do |replacement|
       replacement.slice(:distribution, :module)
