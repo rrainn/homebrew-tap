@@ -123,12 +123,13 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.126"
+  version "0.0.127"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
   depends_on "libngtcp2" => :test
   depends_on "jq"
+	depends_on "libsndfile"
   depends_on "sqlite" => :test
   depends_on "python@3.11"
 
@@ -140,35 +141,38 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.126/labeltruth-cli-0.0.126-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.127/labeltruth-cli-0.0.127-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "a2ab31346d50d813d44826a36aadb8038a301d25e8710792ef8228e58861ab18"
+      sha256 "0048caf2b22031911e8f6ece843f9f019b857114218991ecb2e0271090297f36"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.126/labeltruth-cli-0.0.126-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.127/labeltruth-cli-0.0.127-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "d93100739fe084edb868041cf795e6ecd0060bb1b3095c985033cefcb3857cdf"
+      sha256 "f55765c206a91a739e8c1370023db4e14ff7e092f52cfe96f13bbac39595ffa0"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.126/labeltruth-cli-0.0.126-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.127/labeltruth-cli-0.0.127-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "f70fb47dfc08db7c26cea5b077d42e62bc2ad9068a0b7d600fcdd2d932241ab9"
+      sha256 "27a0f7b62a1962136d54263c94ac6dc150f8dd809347e8257fb58d4634d2bfa8"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.126/labeltruth-cli-0.0.126-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.127/labeltruth-cli-0.0.127-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "941dc173d704c1784fa6bef476e36f3e50e2d1cb9805676d517c2a53dc4085f5"
+      sha256 "8b208557015916b2d9e746b2cc65deb1adc426679681b13a51f0cd4fbf907150"
     end
   end
 
   def worker_python_packages
     packages = %w[
+      numpy==1.26.4
       python-doctr==1.0.1
       transformers==4.49.0
       safetensors==0.5.3
       onnx==1.17.0
       onnxscript==0.2.6
+      onnxruntime==1.20.1
+      soundfile==0.13.1
       optuna==4.8.0
       Pillow==12.2.0
       pillow-heif==1.4.0
@@ -185,8 +189,10 @@ class Labeltruth < Formula
 
     # Platform-specific package specs keep one manifest while matching wheel availability.
     packages << "torch==2.2.2" if OS.mac?
+    packages << "torchaudio==2.2.2" if OS.mac?
     packages << "torchvision==0.17.2" if OS.mac?
     packages << "torch==2.2.2" if OS.linux? && Hardware::CPU.arm?
+    packages << "torchaudio==2.2.2" if OS.linux? && Hardware::CPU.arm?
     packages << "torchvision==0.17.2" if OS.linux? && Hardware::CPU.arm?
     packages << "ai-edge-litert==2.1.5" if OS.mac? && Hardware::CPU.arm?
     packages << "ai-edge-litert==1.0.1" if OS.mac? && Hardware::CPU.intel?
@@ -204,6 +210,7 @@ class Labeltruth < Formula
 
     # Some packages need a dedicated pip source, such as Linux CPU-only PyTorch.
     packages << { package: "torch==2.6.0+cu124", extra_index_url: "https://download.pytorch.org/whl/cu124" } if OS.linux? && Hardware::CPU.intel?
+    packages << { package: "torchaudio==2.6.0+cu124", extra_index_url: "https://download.pytorch.org/whl/cu124" } if OS.linux? && Hardware::CPU.intel?
     packages << { package: "torchvision==0.21.0+cu124", extra_index_url: "https://download.pytorch.org/whl/cu124" } if OS.linux? && Hardware::CPU.intel?
     packages
   end
@@ -218,11 +225,14 @@ class Labeltruth < Formula
 
   def worker_python_imports
     imports = %w[
+      numpy
       doctr
       transformers
       safetensors
       onnx
       onnxscript
+      onnxruntime
+      soundfile
       optuna
       PIL
       pillow_heif
@@ -239,10 +249,13 @@ class Labeltruth < Formula
 
     # Platform-specific imports mirror wheel availability in the package manifest.
     imports << "torch" if OS.mac?
+    imports << "torchaudio" if OS.mac?
     imports << "torchvision" if OS.mac?
     imports << "torch" if OS.linux? && Hardware::CPU.intel?
+    imports << "torchaudio" if OS.linux? && Hardware::CPU.intel?
     imports << "torchvision" if OS.linux? && Hardware::CPU.intel?
     imports << "torch" if OS.linux? && Hardware::CPU.arm?
+    imports << "torchaudio" if OS.linux? && Hardware::CPU.arm?
     imports << "torchvision" if OS.linux? && Hardware::CPU.arm?
     imports << "ai_edge_litert" if OS.mac? && Hardware::CPU.arm?
     imports << "ai_edge_litert" if OS.mac? && Hardware::CPU.intel?
