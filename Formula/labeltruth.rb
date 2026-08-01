@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.145"
+  version "0.0.146"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -141,25 +141,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.145/labeltruth-cli-0.0.145-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.146/labeltruth-cli-0.0.146-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "ba82fdeaec55358a77e96d3674a0688cafeafb0f6d9d69846b86fbd1f4f6e303"
+      sha256 "689711c34c47290d903fcd0c030434b2f8fe98ac4ae6b38562f95843aed361d2"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.145/labeltruth-cli-0.0.145-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.146/labeltruth-cli-0.0.146-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "dfd6a571a69181adbabed0b016584536b281da720e390a3d81b0150e19ed5da4"
+      sha256 "630f85bbdb9c83c82d13ef466b6b79aa0db3ff38b61277c70fab4cee268cac7f"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.145/labeltruth-cli-0.0.145-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.146/labeltruth-cli-0.0.146-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "f54f872be5a501ad4a28299728e30e19a054de4c117e6b21736b1b06e296c062"
+      sha256 "a1a877583408c0b4b3dbb281550eb5a7aecd7563cc216aa1abce3d89d9406cc3"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.145/labeltruth-cli-0.0.145-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.146/labeltruth-cli-0.0.146-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "8611008289f4f898c2e3f8c5ae5cb331e0c7d389ce71d16bbb95f2bc0bb7eeb0"
+      sha256 "906f7409badfcfb6f7c909a885ce8088699c5a61c553786f5cb3f99c5ad90d29"
     end
   end
 
