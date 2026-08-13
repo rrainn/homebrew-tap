@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.174"
+  version "0.0.175"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -141,25 +141,25 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.174/labeltruth-cli-0.0.174-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.175/labeltruth-cli-0.0.175-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "79e8353068739b4728800859e602677ed37a005c58560306b21a8b134222c05a"
+      sha256 "753b9e57a7866c5f012a02a802d740c74366cc48c03e1c614bbfc7689f349b86"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.174/labeltruth-cli-0.0.174-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.175/labeltruth-cli-0.0.175-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "8c569d87a4301dcecf45b871c685ac7e3ccb3030ca899f4fa243b2c2de4ccd34"
+      sha256 "e368b436ad231a7c6a9736964dfeec00cf3de8b829350ebc9ac6a414ccd4e04f"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.174/labeltruth-cli-0.0.174-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.175/labeltruth-cli-0.0.175-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "ae5679becf18df3c1b08384e3c187c4fd0d73ffca006b795dd2c214a0138944f"
+      sha256 "5999401eef56ca3c3c1f810278c9f330abbc9497d5091159b684798d89d92857"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.174/labeltruth-cli-0.0.174-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.175/labeltruth-cli-0.0.175-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "dd19f44956b1412718e170fe802627d99ce97551bd2be7b35b8172208f136b7b"
+      sha256 "74182ebb6f2c0f6ccf84318aabd545c2c7c231aa278fd92eb0a7ffbf1bb955be"
     end
   end
 
@@ -321,12 +321,19 @@ class Labeltruth < Formula
     system homebrew_python, "-m", "venv", libexec/"worker-python"
     system worker_python, "-m", "pip", "install", "--upgrade", "pip"
     constraint_file = libexec/"worker-python-constraints.txt"
+    # A failed download must not make Homebrew's recommended post-install retry fail earlier.
+    rm_f constraint_file if constraint_file.exist?
     constraint_file.write worker_python_constraints.join("\n") + "\n"
     worker_python_custom_pip_packages.each do |package_config|
       pip_args = ["-m", "pip", "install", *pip_binary_policy_args, "--constraint", constraint_file]
       pip_args += ["--extra-index-url", package_config[:extra_index_url]] if package_config[:extra_index_url]
-      system worker_python, *pip_args, package_config[:package]
+      # Fetch only the custom wheel here; resolve dependencies from public PyPI below.
+      system worker_python, *pip_args, "--no-deps", package_config[:package]
     end
+    custom_packages = worker_python_custom_pip_packages.map { |package_config| package_config[:package] }
+    dependency_args = ["-m", "pip", "install", *pip_binary_policy_args, "--constraint", constraint_file]
+    # Installed custom wheels satisfy these specs while pip obtains dependencies from public PyPI.
+    system worker_python, *dependency_args, *custom_packages unless custom_packages.empty?
     system worker_python, "-m", "pip", "install", *pip_binary_policy_args, "--constraint", constraint_file, *worker_python_packages unless worker_python_packages.empty?
     worker_python_distribution_replacements.each do |replacement|
       # A clean owner transition avoids leaving overlapping cv2 wheel files behind.
