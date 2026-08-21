@@ -123,7 +123,7 @@ end
 class Labeltruth < Formula
   desc "CLI tool for LabelTruth workflows"
   homepage "https://github.com/rrainn/LabelTruth"
-  version "0.0.201"
+  version "0.0.202"
 
   depends_on "libffi" => :test
   depends_on "libnghttp3" => :test
@@ -141,31 +141,34 @@ class Labeltruth < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.201/labeltruth-cli-0.0.201-darwin-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.202/labeltruth-cli-0.0.202-darwin-arm64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "a2b3400c811b7b833401826bb2c45cbd94aae65853b7075f82e9c6a07e7ece1f"
+      sha256 "ffb344a8fd17800017842caff23531cd059d4658fcb1a2753f215b052a672d2b"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.201/labeltruth-cli-0.0.201-darwin-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.202/labeltruth-cli-0.0.202-darwin-x64.tar.gz",
           using: GitHubPrivateAssetDownloadStrategy
-      sha256 "5f0a595549517f4bfbd3f23d4d2ac6a054916a8e4b0d8f33160cf88385ae241c"
+      sha256 "240ef36f82cafd6b8d670cecd1a0fb05b91c4ab7c83f3320ccc88b433f9efa54"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.201/labeltruth-cli-0.0.201-linux-arm64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.202/labeltruth-cli-0.0.202-linux-arm64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "bfbb498970a59813f8767b5ca476eaaa1c630a3097321080b8e46f8519619702"
+      sha256 "a7982f384ec45daa42a9925c722951ad42fa9b8bb362520438e44710a314f232"
     else
-      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.201/labeltruth-cli-0.0.201-linux-x64.tar.gz",
+      url "https://github.com/rrainn/LabelTruth/releases/download/v0.0.202/labeltruth-cli-0.0.202-linux-x64.tar.gz",
         using: GitHubPrivateAssetDownloadStrategy
-      sha256 "2282d1bc95d5e5cffb360ff1924e6da765a28a69ab1edf03765f6da3c05aed1a"
+      sha256 "d0bedd26148b1fac04344b1576087e3333c625a46f56a359ee3ab83946bef5af"
     end
   end
 
   def worker_python_packages
     packages = %w[
       numpy==1.26.4
+      debugpy==1.8.21
+      regex==2026.7.19
+      huggingface-hub==0.36.2
       python-doctr==1.0.1
       transformers==4.49.0
       safetensors==0.5.3
@@ -226,6 +229,9 @@ class Labeltruth < Formula
   def worker_python_imports
     imports = %w[
       numpy
+      debugpy
+      regex
+      huggingface_hub
       doctr
       transformers
       safetensors
