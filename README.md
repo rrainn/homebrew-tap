@@ -7,7 +7,7 @@ Homebrew tap for [LabelTruth](https://github.com/rrainn/LabelTruth).
 ### Prerequisites
 
 - [Homebrew](https://brew.sh/)
-- [Node.js](https://nodejs.org/) 20+ (installed automatically via the `node` dependency)
+- The LabelTruth release bundles Node.js.
 - A GitHub Personal Access Token (classic) with the `repo` scope (required for private repository access)
 
 ### One-time setup: authenticate with GitHub
@@ -43,8 +43,7 @@ Make sure `HOMEBREW_GITHUB_API_TOKEN` is set and the token has the `repo`
 scope. Tokens without the `repo` scope cannot access private GitHub releases.
 
 ```bash
-echo $HOMEBREW_GITHUB_API_TOKEN
-# Should print your token starting with ghp_
+test -n "${HOMEBREW_GITHUB_API_TOKEN:-}" && echo "GitHub token is set"
 ```
 
 ### "Already installed"
@@ -55,14 +54,10 @@ brew reinstall labeltruth
 
 ## How it works
 
-This tap is updated automatically. When a new version of the LabelTruth CLI is
-released (via a `v*` tag push to the main repo), the release workflow:
-
-1. Builds platform tarballs for macOS (arm64, x64) and Linux (x64)
-2. Creates a GitHub Release with those tarballs
-3. Sends a `repository_dispatch` event to this tap repository
-4. The update-formula workflow in this repo updates `Formula/labeltruth.rb`
-   with the new version, URLs, and SHA256 checksums
+When a GitHub release is published in the LabelTruth repository, its release
+workflow builds and uploads CLI tarballs for macOS and Linux on arm64 and x64.
+It renders the Homebrew formula with the release version, download URLs, and
+SHA-256 checksums, then publishes the formula directly to this tap.
 
 ## Formulae
 
