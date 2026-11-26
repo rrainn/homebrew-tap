@@ -1,17 +1,17 @@
 class Rrainn < Formula
   desc "Command-line interface for rrainn"
   homepage "https://github.com/rrainn/homebrew-tap"
-  version "0.1.0"
+  version "1.0.0"
   depends_on macos: :ventura
 
   on_arm do
-    url "https://github.com/rrainn/homebrew-tap/releases/download/rrainn-v0.1.0/rrainn-0.1.0-macos-arm64.tar.gz"
-    sha256 "93730e7241110e7bd2af77b06f4cfcf50f9c0282b9e95e7b9779dfa06a4a7b34"
+    url "https://github.com/rrainn/homebrew-tap/releases/download/rrainn-v1.0.0/rrainn-1.0.0-macos-arm64.tar.gz"
+    sha256 "1ad1cc0fc9c1f73fafdb8e1f0f41450e81b56fa38f171c3f27c2a95760ceaa9a"
   end
 
   on_intel do
-    url "https://github.com/rrainn/homebrew-tap/releases/download/rrainn-v0.1.0/rrainn-0.1.0-macos-x86_64.tar.gz"
-    sha256 "32f610bd497a4e9bd04978d69b843ca3a3ec27375be4348be27d17571cbf0410"
+    url "https://github.com/rrainn/homebrew-tap/releases/download/rrainn-v1.0.0/rrainn-1.0.0-macos-x86_64.tar.gz"
+    sha256 "95fcaf32c8c7dcaeb198eb4965a38eb2444d7b44772da8dfdc7921862832c142"
   end
 
   def install
